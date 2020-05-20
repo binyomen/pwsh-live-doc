@@ -1,4 +1,4 @@
 # PowerShell Live Docs
 
-Run real code examples for an empirical representation of the inscrutable tax
-code that is PowerShell semantics.
+Run real code examples to generate empirical documentation of the complex
+nonsense that is PowerShell semantics.
