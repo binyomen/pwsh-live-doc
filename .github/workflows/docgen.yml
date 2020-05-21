@@ -15,8 +15,22 @@ jobs:
     runs-on: windows-latest
     steps:
     - uses: actions/checkout@v2
+
     - name: Generate the doc HTML file
-      run: .\generateHtml.ps1 > pwsh-live-doc.html
-    - uses: actions/upload-artifact@v2
+      run: .\generateHtml.ps1 > .\pwsh-live-doc.html
+
+    - name: Upload the HTML file as an artifact
+      uses: actions/upload-artifact@v2
       with:
-        path: pwsh-live-doc.html
+        path: .\pwsh-live-doc.html
+
+    - name: Copy the HTML file to the web root
+      run: |
+        mkdir .\webroot
+        mv .\pwsh-live-doc.html .\webroot\index.html
+
+    - name: Deploy the HTML file to GitHub Pages
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: .\webroot
