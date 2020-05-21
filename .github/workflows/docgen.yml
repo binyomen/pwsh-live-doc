@@ -1,0 +1,22 @@
+name: docgen
+
+defaults:
+  run:
+    shell: pwsh
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Generate the doc HTML file
+      run: .\generateHtml.ps1 > pwsh-live-doc.html
+    - uses: actions/upload-artifact@v2
+      with:
+        path: pwsh-live-doc.html
