@@ -22,14 +22,27 @@ jobs:
     - name: Upload the HTML file as an artifact
       uses: actions/upload-artifact@v2
       with:
+        name: pwsh-live-doc
         path: .\pwsh-live-doc.html
 
-    - name: Copy the HTML file to the web root
+  deploy:
+    runs-on: windows-latest
+    needs: build
+    if: ${{ github.event_name == 'push' }}
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Download the HTML file
+      uses: actions/download-artifact@v2
+      with:
+        name: pwsh-live-doc
+
+    - name: Create a webroot directory and put the HTML file in it
       run: |
         mkdir .\webroot
         mv .\pwsh-live-doc.html .\webroot\index.html
 
-    - name: Deploy the HTML file to GitHub Pages
+    - name: Deploy the docs to GitHub Pages
       uses: peaceiris/actions-gh-pages@v3
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
