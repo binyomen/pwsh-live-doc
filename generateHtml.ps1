@@ -1,4 +1,4 @@
-$testScripts = Get-ChildItem $PSScriptRoot "test_*.ps1"
+$testScripts = Get-ChildItem $PSScriptRoot "generators\*.ps1"
 $testScriptHtml = $testScripts | ForEach-Object {& $_}
 
 $htmlPrefix = @'

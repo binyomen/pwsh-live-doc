@@ -1,4 +1,4 @@
-Import-Module -Force $PSScriptRoot\docgen
+Import-Module -Force $PSScriptRoot\..\docgen
 
 OutputText @'
 When <code>$ErrorActionPreference</code> is <code>Stop</code>,
