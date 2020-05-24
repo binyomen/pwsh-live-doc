@@ -69,6 +69,8 @@ OutputCode {
         Write-Output "caught outside the cmdlet: $_"
     }
 
+    Write-Output ""
+
     Write-Output "testing basic function"
     try {
         TestWriteErrorCmdletBasic
