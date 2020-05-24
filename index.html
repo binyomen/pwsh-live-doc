@@ -66,6 +66,8 @@ try {
     Write-Output "caught outside the cmdlet: $_"
 }
 
+Write-Output ""
+
 Write-Output "testing basic function"
 try {
     TestWriteErrorCmdletBasic
@@ -76,6 +78,7 @@ try {
 <pre><p>testing advanced function
 caught inside the cmdlet: error in try
 after the try-catch
+
 testing basic function
 caught inside the cmdlet: error in try
 after the try-catch</p></pre>     </body>
