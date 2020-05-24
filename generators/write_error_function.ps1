@@ -50,7 +50,6 @@ OutputCode {
     }
 
     function TestWriteErrorCmdletBasic {
-        [CmdletBinding()]
         param()
 
         $local:ErrorActionPreference = "Stop"
