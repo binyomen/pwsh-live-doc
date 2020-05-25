@@ -51,8 +51,12 @@ function OutputCode {
     $codeDeindented = Deindent $codeAsString
     $formattedCode = "<pre class=`"code-view`"><code class=`"powershell`">" + $codeDeindented + "</code></pre>"
 
+    $outputTableHtml = "<table class=`"output-table`"><caption>Output by version</caption><thead><tr>"
+
     $exesToTest = GetPowerShellExesToTest
 
+    # Create a map of output string to list of versions. This lets us group
+    # versions by what their output is.
     $outputToVersionMap = @{}
     $allVersions = @()
     foreach ($exe in $exesToTest) {
@@ -69,20 +73,21 @@ function OutputCode {
         $allVersions += $version
     }
 
-    $outputTableHtml = "<table class=`"output-table`"><caption>Output by version</caption><thead><tr>"
-
-    $outputs = $outputToVersionMap.Keys
-    $generalizedVersionStrings = @()
-    foreach ($output in $outputs) {
+    # Now create a map from version string to corresponding output. This lets
+    # us sort the version strings without mismatching them with their outputs.
+    $versionStringToOutputMap = @{}
+    foreach ($output in $outputToVersionMap.Keys) {
         $generalizedVersions = GeneralizeVersions $allVersions $outputToVersionMap[$output] | Sort-Object
-        $generalizedVersionStrings += "<th>$($generalizedVersions -join ", ")</th>"
+        $versionStringToOutputMap["<th>$($generalizedVersions -join ", ")</th>"] = $output
     }
 
-    $outputTableHtml += "$($generalizedVersionStrings | Sort-Object)"
+    $sortedVersionKeys = $versionStringToOutputMap.Keys | Sort-Object
+    $outputTableHtml += "$sortedVersionKeys"
 
     $outputTableHtml += "</tr></thead><tbody><tr>"
 
-    foreach ($output in $outputs) {
+    foreach ($version in $sortedVersionKeys) {
+        $output = $versionStringToOutputMap[$version]
         $outputTableHtml += "<td>$output</td>"
     }
 
