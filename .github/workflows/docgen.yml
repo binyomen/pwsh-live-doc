@@ -16,6 +16,11 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
+    - name: Run tests
+      run: |
+        Install-Module -Name Pester -Force
+        .\runTests.ps1
+
     - name: Generate the doc HTML file
       run: .\generateHtml.ps1 > .\pwsh-live-doc.html
 
