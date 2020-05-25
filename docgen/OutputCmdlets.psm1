@@ -1,3 +1,5 @@
+using namespace System.Management.Automation
+
 function OutputText {
     [CmdletBinding()]
     [OutputType([String])]
@@ -34,15 +36,43 @@ function OutputCode {
         [ScriptBlock] $Code
     )
 
-    Import-Module -Force $PSScriptRoot\..\util
-
     $codeAsString = $Code.ToString()
     $codeDeindented = Deindent $codeAsString
     $formattedCode = "<pre><code class=`"powershell`">" + $codeDeindented + "</code></pre>"
 
-    $commandOutput = Invoke-Expression $Code.ToString()
-    $stringCommandOutput = $commandOutput -join "`n"
-    $formattedCommandOutput = "<pre><p>" + $stringCommandOutput + "</p></pre>"
+    $exesToTest = GetPowerShellExesToTest
 
-    return $formattedCode + "`n" + $formattedCommandOutput
+    $outputToVersionMap = @{}
+    $allVersions = @()
+    foreach ($exe in $exesToTest) {
+        $commandOutput = InvokeExe $exe $Code.ToString()
+        $stringCommandOutput = $commandOutput -join "`n"
+        $formattedCommandOutput = "<pre><p>" + $stringCommandOutput + "</p></pre>"
+
+        if (-not $outputToVersionMap.ContainsKey($formattedCommandOutput)) {
+            $outputToVersionMap[$formattedCommandOutput] = @()
+        }
+
+        $version = GetExeVersion $exe
+        $outputToVersionMap[$formattedCommandOutput] += $version
+        $allVersions += $version
+    }
+
+    $outputTableHtml = "<table><thead><tr>"
+
+    $outputs = $outputToVersionMap.Keys
+    foreach ($output in $outputs) {
+        $generalizedVersions = GeneralizeVersions $allVersions $outputToVersionMap[$output] | Sort-Object
+        $outputTableHtml += "<th>$($generalizedVersions -join ", ")</th>"
+    }
+
+    $outputTableHtml += "</tr></thead><tbody><tr>"
+
+    foreach ($output in $outputs) {
+        $outputTableHtml += "<td>$output</td>"
+    }
+
+    $outputTableHtml += "</tr></tbody></table>"
+
+    return $formattedCode + $outputTableHtml
 }

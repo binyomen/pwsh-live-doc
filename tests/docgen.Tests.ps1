@@ -104,10 +104,6 @@ Describe "GeneralizeVersions" {
             GeneralizeVersions $allVersions (V 6.2.0) | Should -Be @("6.2")
         }
 
-        It "returns an empty array if all versions are passed in" {
-            GeneralizeVersions $allVersions $allVersions | Should -Be @()
-        }
-
         It "generalizes minor versions" {
             GeneralizeVersions $allVersions (V `
                 0.1.0,`

@@ -8,7 +8,8 @@ PowerShellVersion = "7.0"
 
 NestedModules = @(
     "OutputCmdlets.psm1",
-    "GeneralizeVersions.psm1")
+    "GeneralizeVersions.psm1",
+    "ExesToTest.psm1")
 
 CmdletsToExport = @(
     "OutputText",

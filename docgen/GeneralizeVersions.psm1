@@ -9,7 +9,7 @@ class VersionNode {
     VersionNode() {
         $this.Children = @()
         $this.Value = $null
-        $this.GeneralizeSuffix = "all versions"
+        $this.GeneralizeSuffix = ""
         $this.IsLeafInSubset = $false
     }
 
@@ -77,7 +77,7 @@ class VersionNode {
 
             $prefix = $this.Value -ne $null ? "$($this.Value)." : ""
             if ($numChildrenFullyCovered -eq $this.Children.Count) {
-                $strings = $this.Value -ne $null ? "$prefix$($this.GeneralizeSuffix)" : @()
+                $strings = $this.GeneralizeSuffix -ne "" ? "$prefix$($this.GeneralizeSuffix)" : $childResults
                 return [Tuple]::Create([String[]] $strings, $true)
             } else {
                 $strings = $childResults | ForEach-Object { "$prefix$_" }
