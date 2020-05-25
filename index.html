@@ -30,8 +30,7 @@ try {
 } catch {
     Write-Output "caught outside the cmdlet: $_"
 }
-</code></pre>
-<pre><p>caught outside the cmdlet: error in try</p></pre> <p>Write-Error, on the other hand, is catchable inside the function, for both
+</code></pre><table><thead><tr><th>5.x, 7.x</th></tr></thead><tbody><tr><td><pre><p>caught outside the cmdlet: error in try</p></pre></td></tr></tbody></table> <p>Write-Error, on the other hand, is catchable inside the function, for both
 advanced and basic functions.</p> <pre><code class="powershell">function TestWriteErrorCmdletAdvanced {
     [CmdletBinding()]
     param()
@@ -74,12 +73,11 @@ try {
 } catch {
     Write-Output "caught outside the cmdlet: $_"
 }
-</code></pre>
-<pre><p>testing advanced function
+</code></pre><table><thead><tr><th>5.x, 7.x</th></tr></thead><tbody><tr><td><pre><p>testing advanced function
 caught inside the cmdlet: error in try
 after the try-catch
 
 testing basic function
 caught inside the cmdlet: error in try
-after the try-catch</p></pre>     </body>
+after the try-catch</p></pre></td></tr></tbody></table>     </body>
 </html>
