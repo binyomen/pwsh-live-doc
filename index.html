@@ -22,8 +22,8 @@ Write-Output "outside of parentheses: `$? = $?"
 (Write-Error error)
 Write-Output "inside of parentheses: `$? = $?"
 </code></pre><table class="output-table"><caption>Output by version</caption><thead><tr><th>5.x</th> <th>7.x</th></tr></thead><tbody><tr><td><pre><p>outside of parentheses: $? = False
-inside of parentheses: $? = True</p></pre></td><td><pre><p>outside of parentheses: $? = False
-inside of parentheses: $? = False</p></pre></td></tr></tbody></table> <h2>The WriteError function</h2> <p>When <code>$ErrorActionPreference</code> is <code>Stop</code>,
+inside of parentheses: $? = False</p></pre></td><td><pre><p>outside of parentheses: $? = False
+inside of parentheses: $? = True</p></pre></td></tr></tbody></table> <h2>The WriteError function</h2> <p>When <code>$ErrorActionPreference</code> is <code>Stop</code>,
 <code>$PSCmdlet.WriteError</code> exits the current advanced function and
 throws. However, the exception it throws is not catchable from within the
 advanced function.</p> <pre><code class="powershell">function TestWriteErrorFunction {
