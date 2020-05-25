@@ -10,23 +10,24 @@
         <script>hljs.initHighlightingOnLoad();</script>
     </head>
     <body>
-    <h1>PowerShell live documentation</h1> <h2>Variable $? in parentheses</h2> <p>In PowerShell, the <code>$?</code> variable represents the exit status of the
+        <div id="main-content">
+            <h1>PowerShell live documentation</h1> <h2>Variable $? in parentheses</h2> <p>In PowerShell, the <code>$?</code> variable represents the exit status of the
 previous command. If it's true, the command succeeded. If it's false, the
 command failed. However, you need to be careful if using the variable, since
 enclosing a command in parentheses can reset <code>$?</code> to true in
-PowerShell 5 and earlier.</p> <pre><code class="powershell">$local:ErrorActionPreference = "SilentlyContinue"
+PowerShell 5 and earlier.</p> <pre class="code-view"><code class="powershell">$local:ErrorActionPreference = "SilentlyContinue"
 
 Write-Error error
 Write-Output "outside of parentheses: `$? = $?"
 
 (Write-Error error)
 Write-Output "inside of parentheses: `$? = $?"
-</code></pre><table class="output-table"><caption>Output by version</caption><thead><tr><th>5.x</th> <th>7.x</th></tr></thead><tbody><tr><td><pre><p>outside of parentheses: $? = False
-inside of parentheses: $? = False</p></pre></td><td><pre><p>outside of parentheses: $? = False
-inside of parentheses: $? = True</p></pre></td></tr></tbody></table> <h2>The WriteError function</h2> <p>When <code>$ErrorActionPreference</code> is <code>Stop</code>,
+</code></pre><table class="output-table"><caption>Output by version</caption><thead><tr><th>5.x</th> <th>7.x</th></tr></thead><tbody><tr><td><pre class="output-text">outside of parentheses: $? = False
+inside of parentheses: $? = False</pre></td><td><pre class="output-text">outside of parentheses: $? = False
+inside of parentheses: $? = True</pre></td></tr></tbody></table> <h2>The WriteError function</h2> <p>When <code>$ErrorActionPreference</code> is <code>Stop</code>,
 <code>$PSCmdlet.WriteError</code> exits the current advanced function and
 throws. However, the exception it throws is not catchable from within the
-advanced function.</p> <pre><code class="powershell">function TestWriteErrorFunction {
+advanced function.</p> <pre class="code-view"><code class="powershell">function TestWriteErrorFunction {
     [CmdletBinding()]
     param()
 
@@ -45,8 +46,8 @@ try {
 } catch {
     Write-Output "caught outside the cmdlet: $_"
 }
-</code></pre><table class="output-table"><caption>Output by version</caption><thead><tr><th>5.x, 7.x</th></tr></thead><tbody><tr><td><pre><p>caught outside the cmdlet: error in try</p></pre></td></tr></tbody></table> <p>Write-Error, on the other hand, is catchable inside the function, for both
-advanced and basic functions.</p> <pre><code class="powershell">function TestWriteErrorCmdletAdvanced {
+</code></pre><table class="output-table"><caption>Output by version</caption><thead><tr><th>5.x, 7.x</th></tr></thead><tbody><tr><td><pre class="output-text">caught outside the cmdlet: error in try</pre></td></tr></tbody></table> <p><code>Write-Error</code>, on the other hand, is catchable inside the function,
+for both advanced and basic functions.</p> <pre class="code-view"><code class="powershell">function TestWriteErrorCmdletAdvanced {
     [CmdletBinding()]
     param()
 
@@ -88,11 +89,12 @@ try {
 } catch {
     Write-Output "caught outside the cmdlet: $_"
 }
-</code></pre><table class="output-table"><caption>Output by version</caption><thead><tr><th>5.x, 7.x</th></tr></thead><tbody><tr><td><pre><p>testing advanced function
+</code></pre><table class="output-table"><caption>Output by version</caption><thead><tr><th>5.x, 7.x</th></tr></thead><tbody><tr><td><pre class="output-text">testing advanced function
 caught inside the cmdlet: error in try
 after the try-catch
 
 testing basic function
 caught inside the cmdlet: error in try
-after the try-catch</p></pre></td></tr></tbody></table>     </body>
+after the try-catch</pre></td></tr></tbody></table>         </div>
+    </body>
 </html>
