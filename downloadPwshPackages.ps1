@@ -1,7 +1,35 @@
 using namespace System.Collections.Generic
 using namespace System.Management.Automation
 
+[CmdletBinding()]
+[OutputType([Void])]
+param(
+    [ScriptBlock] $ReleaseFilter = {
+        param($AllReleases, $ReleaseToCheck)
+
+        $version = GetVersionFromRelease($ReleaseToCheck)
+        return (-not $ReleaseToCheck.prerelease) -and
+            ($version.PreReleaseLabel -eq $null) -and
+            ($version.BuildLabel -eq $null) -and
+            ($version -ge [SemanticVersion]::new("6"))
+    }
+)
+
 $local:ErrorActionPreference = "Stop"
+
+# This function is in scope here, and so it can be used in any script blocks
+# passed to $ReleaseFilter.
+function GetVersionFromRelease {
+    [CmdletBinding()]
+    [OutputType([SemanticVersion])]
+    param(
+        [PSCustomObject] $Release
+    )
+
+    $tagName = $Release.tag_name
+    $versionString = $tagName[1..$tagName.length] -join ""
+    return [SemanticVersion]::new($versionString)
+}
 
 function GetNextUrl {
     [CmdletBinding()]
@@ -53,18 +81,7 @@ function GetAllReleaseUrls {
         $url = GetNextUrl $headers["Link"][0] # there should only be one
     } while ($url -ne $null)
 
-    function GetVersionFromRelease($Release) {
-        $tagName = $Release.tag_name
-        $versionString = $tagName[1..$tagName.length] -join ""
-        return [SemanticVersion]::new($versionString)
-    }
-
-    $filteredReleases = $releases |`
-        Where-Object { -not $_.prerelease } |`
-        Where-Object { $v = GetVersionFromRelease($_); $v.PreReleaseLabel -eq $null } |`
-        Where-Object { $v = GetVersionFromRelease($_); $v.BuildLabel -eq $null } |`
-        Where-Object { $v = GetVersionFromRelease($_); $v -ge [SemanticVersion]::new("6") }
-
+    $filteredReleases = $releases | Where-Object { Invoke-Command $ReleaseFilter -Args $releases,$_ }
     $assetUrls = $filteredReleases | ForEach-Object {
         $release = $_
         $asset = ($release.assets | Where-Object { $_.name -match "-win-x64.zip`$" })[0] # there should only be one
