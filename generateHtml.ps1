@@ -6,13 +6,14 @@ $htmlPrefix = @'
 <html lang="en-US">
     <head>
         <meta charset="UTF-8" />
-        <title>Script Test Results</title>
+        <title>PowerShell live documentation</title>
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.0.0/styles/default.min.css">
         <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.0.3/highlight.min.js"></script>
         <script charset="UTF-8" src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.0.3/languages/powershell.min.js"></script>
         <script>hljs.initHighlightingOnLoad();</script>
     </head>
     <body>
+    <h1>PowerShell live documentation</h1>
 '@
 
 $htmlSuffix = @'

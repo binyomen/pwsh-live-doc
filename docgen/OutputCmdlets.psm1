@@ -1,5 +1,16 @@
 using namespace System.Management.Automation
 
+function OutputTitle {
+    [CmdletBinding()]
+    [OutputType([String])]
+    param(
+        [Parameter(Mandatory)]
+        [String] $Text
+    )
+
+    return "<h2>$Text</h2>"
+}
+
 function OutputText {
     [CmdletBinding()]
     [OutputType([String])]

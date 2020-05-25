@@ -1,5 +1,7 @@
 Import-Module -Force $PSScriptRoot\..\docgen
 
+OutputTitle 'The WriteError function'
+
 OutputText @'
 When <code>$ErrorActionPreference</code> is <code>Stop</code>,
 <code>$PSCmdlet.WriteError</code> exits the current advanced function and
