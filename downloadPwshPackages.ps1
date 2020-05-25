@@ -37,7 +37,6 @@ function WriteRateLimit {
 
     Write-Host "Rate limit:"
     Write-Host "Limit: $limit, Remaining: $remaining, Reset: $resetString"
-    Write-Host
 }
 
 function GetAllReleaseUrls {
@@ -110,6 +109,8 @@ function DownloadUrls {
         $extractPath = "$packageDir\$name"
         $zipPath = "$extractPath.zip"
         if (-not (Test-Path $extractPath)) {
+            Write-Host
+
             if (-not (Test-Path $zipPath)) {
                 Write-Host "Downloading $url to $zipPath..."
                 Invoke-RestMethod $url -Headers @{Accept="application/octet-stream"} -OutFile $zipPath
