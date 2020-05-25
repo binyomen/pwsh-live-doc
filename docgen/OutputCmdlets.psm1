@@ -69,7 +69,7 @@ function OutputCode {
         $allVersions += $version
     }
 
-    $outputTableHtml = "<table><thead><tr>"
+    $outputTableHtml = "<table class=`"output-table`"><caption>Output by version</caption><thead><tr>"
 
     $outputs = $outputToVersionMap.Keys
     $generalizedVersionStrings = @()

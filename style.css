@@ -1,0 +1,15 @@
+:root {
+    --table-border: 2px solid black;
+}
+
+.output-table {
+    table-layout: fixed;
+    width: 100%;
+    border-collapse: collapse;
+    border: var(--table-border);
+}
+
+.output-table th, .output-table td {
+    padding: 10px;
+    border: var(--table-border);
+}

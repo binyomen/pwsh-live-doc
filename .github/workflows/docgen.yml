@@ -22,13 +22,19 @@ jobs:
         .\runTests.ps1
 
     - name: Generate the doc HTML file
-      run: .\generateHtml.ps1 > .\pwsh-live-doc.html
+      run: .\generateHtml.ps1 > .\index.html
 
     - name: Upload the HTML file as an artifact
       uses: actions/upload-artifact@v2
       with:
-        name: pwsh-live-doc
-        path: .\pwsh-live-doc.html
+        name: site
+        path: .\index.html
+
+    - name: Upload the CSS file as an artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: site
+        path: .\style.css
 
   deploy:
     runs-on: windows-latest
@@ -37,18 +43,14 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
-    - name: Download the HTML file
+    - name: Download the site to the webroot
       uses: actions/download-artifact@v2
       with:
-        name: pwsh-live-doc
-
-    - name: Create a webroot directory and put the HTML file in it
-      run: |
-        mkdir .\webroot
-        mv .\pwsh-live-doc.html .\webroot\index.html
+        name: site
+        path: .\webroot\
 
     - name: Deploy the docs to GitHub Pages
       uses: peaceiris/actions-gh-pages@v3
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: .\webroot
+        publish_dir: .\webroot\
