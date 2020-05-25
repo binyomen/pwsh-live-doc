@@ -41,7 +41,7 @@ function WriteRateLimit {
 
 function GetAllReleaseUrls {
     [CmdletBinding()]
-    [OutputType([Tuple`2[[String], [String]][]])]
+    [OutputType([Tuple`3[[String], [String], [Int64]][]])]
     param()
 
     $url = "https://api.github.com/repos/PowerShell/PowerShell/releases"
@@ -68,7 +68,7 @@ function GetAllReleaseUrls {
     $assetUrls = $filteredReleases | ForEach-Object {
         $release = $_
         $asset = ($release.assets | Where-Object { $_.name -match "-win-x64.zip`$" })[0] # there should only be one
-        return [Tuple]::Create($release.tag_name, $asset.url)
+        return [Tuple]::Create($release.tag_name, $asset.url, $asset.size)
     }
 
     return $assetUrls
@@ -94,7 +94,7 @@ function DownloadUrls {
     [CmdletBinding()]
     [OutputType([Void])]
     param(
-        [Tuple`2[[String], [String]][]] $UrlPairs
+        [Tuple`3[[String], [String], [Int64]][]] $UrlPairs
     )
 
     $packageDir = "$PSScriptRoot\pwsh-packages"
@@ -105,6 +105,7 @@ function DownloadUrls {
     foreach ($pair in $UrlPairs) {
         $name = $pair.Item1
         $url = $pair.Item2
+        $size = $pair.Item3
 
         $extractPath = "$packageDir\$name"
         $zipPath = "$extractPath.zip"
@@ -113,6 +114,7 @@ function DownloadUrls {
 
             if (-not (Test-Path $zipPath)) {
                 Write-Host "Downloading $url to $zipPath..."
+                Write-Host "Size: $([Math]::Round($size / 1mb, 1))MB ($size bytes)"
                 Invoke-RestMethod $url -Headers @{Accept="application/octet-stream"} -OutFile $zipPath
                 WriteRateLimit
             }
