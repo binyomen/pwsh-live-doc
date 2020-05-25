@@ -72,10 +72,13 @@ function OutputCode {
     $outputTableHtml = "<table><thead><tr>"
 
     $outputs = $outputToVersionMap.Keys
+    $generalizedVersionStrings = @()
     foreach ($output in $outputs) {
         $generalizedVersions = GeneralizeVersions $allVersions $outputToVersionMap[$output] | Sort-Object
-        $outputTableHtml += "<th>$($generalizedVersions -join ", ")</th>"
+        $generalizedVersionStrings += "<th>$($generalizedVersions -join ", ")</th>"
     }
+
+    $outputTableHtml += "$($generalizedVersionStrings | Sort-Object)"
 
     $outputTableHtml += "</tr></thead><tbody><tr>"
 
