@@ -32,8 +32,8 @@ OutputCode {
 }
 
 OutputText @'
-Write-Error, on the other hand, is catchable inside the function, for both
-advanced and basic functions.
+<code>Write-Error</code>, on the other hand, is catchable inside the function,
+for both advanced and basic functions.
 '@
 
 OutputCode {
