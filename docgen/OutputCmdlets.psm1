@@ -49,7 +49,7 @@ function OutputCode {
 
     $codeAsString = $Code.ToString()
     $codeDeindented = Deindent $codeAsString
-    $formattedCode = "<pre><code class=`"powershell`">" + $codeDeindented + "</code></pre>"
+    $formattedCode = "<pre class=`"code-view`"><code class=`"powershell`">" + $codeDeindented + "</code></pre>"
 
     $exesToTest = GetPowerShellExesToTest
 
@@ -58,7 +58,7 @@ function OutputCode {
     foreach ($exe in $exesToTest) {
         $commandOutput = InvokeExe $exe $Code.ToString()
         $stringCommandOutput = $commandOutput -join "`n"
-        $formattedCommandOutput = "<pre><p>" + $stringCommandOutput + "</p></pre>"
+        $formattedCommandOutput = "<pre class=`"output-text`">" + $stringCommandOutput + "</pre>"
 
         if (-not $outputToVersionMap.ContainsKey($formattedCommandOutput)) {
             $outputToVersionMap[$formattedCommandOutput] = @()

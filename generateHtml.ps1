@@ -14,10 +14,12 @@ $htmlPrefix = @'
         <script>hljs.initHighlightingOnLoad();</script>
     </head>
     <body>
-    <h1>PowerShell live documentation</h1>
+        <div id="main-content">
+            <h1>PowerShell live documentation</h1>
 '@
 
 $htmlSuffix = @'
+        </div>
     </body>
 </html>
 '@
