@@ -72,3 +72,61 @@ If you generated index.html in the previous step, the root of the repository
 can now be the webroot of the site. Run a static file server like
 [http-server](https://www.npmjs.com/package/http-server) in the repository's
 root and point your browser to wherever it says to.
+
+## Development
+
+### Adding example topics
+
+Each group of examples is stored in a script in the `example-scripts`
+directory. Each script should contain examples for a specific topic. If you
+want to add a new topic, you should create a new file.
+
+### Example script helper functions
+
+Helper functions for the example scripts can be imported with `Import-Module
+-Force $PSScriptRoot\..\docgen` at the top of the script.
+
+#### OutputTitle
+
+This function is called to generate an HTML `h2` element for your particular
+example topic. You should always put this at the top of your script after
+importing docgen.
+
+#### OutputText
+
+This function takes a string of markdown code. This markdown is generated into
+HTML on the page.
+
+#### OutputCode
+
+This function takes a script block. The script block should not depend on any
+state outside of it. It will be converted into a string and then run in
+separate PowerShell processes with `<exename> -c $scriptBlockString`.
+
+The functions from the util module (e.g. `NewErrorRecord`) will be available
+within your script block.
+
+After running the script block against multiple versions of PowerShell,
+`OutputCode` generates HTML to display the code block as well as a table of
+outputs from the PowerShell processes, grouped by PowerShell version.
+
+### HTML generation
+
+The actual process of generating the site begins with the `generateHtml.ps1`
+script. This script runs all scripts in `example-scripts` to generate their
+individual `<section>`s and puts the output within the context of an HTML
+document.
+
+The bulk of HTML generation occurs in the docgen module, specifically
+`OutputCode`.
+
+### Downloading PowerShell packages
+
+All the code for the package downloader can be found in
+`downloadPwshPackages.ps1`.
+
+### Continuous Integration
+
+All continuous integration is performed by GitHub Actions. The configuration
+files are in `.github\workflows\`. The workflows test the code, generate the
+site, and deploy it to GitHub Pages.
