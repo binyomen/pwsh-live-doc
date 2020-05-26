@@ -6,10 +6,19 @@ body {
     font-size: large;
 }
 
-#main-content {
-    width: 50%;
+#content {
+    width: 40em;
+    max-width: 100%;
     margin-left: auto;
     margin-right: auto;
+}
+
+#versions-tested-line {
+    font-variant-caps: small-caps;
+}
+
+.tested-version {
+    margin: 4px;
 }
 
 .output-table {
@@ -17,6 +26,7 @@ body {
     border-collapse: collapse;
     border: var(--table-border);
 
+    width: 100%;
     margin-left: auto;
     margin-right: auto;
 }
@@ -28,8 +38,4 @@ body {
 
 .output-text, .code-view {
     overflow: auto;
-}
-
-.output-text {
-    display: inline;
 }
