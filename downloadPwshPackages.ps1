@@ -10,8 +10,7 @@ param(
         $version = GetVersionFromRelease($ReleaseToCheck)
         return (-not $ReleaseToCheck.prerelease) -and
             ($version.PreReleaseLabel -eq $null) -and
-            ($version.BuildLabel -eq $null) -and
-            ($version -ge [SemanticVersion]::new("6"))
+            ($version.BuildLabel -eq $null)
     }
 )
 
@@ -81,7 +80,12 @@ function GetAllReleaseUrls {
         $url = GetNextUrl $headers["Link"][0] # there should only be one
     } while ($url -ne $null)
 
-    $filteredReleases = $releases | Where-Object { Invoke-Command $ReleaseFilter -Args $releases,$_ }
+    $filteredReleases = $releases |`
+        # We never want to consider releases with versions less than 6, since
+        # they don't define the assets we're looking for.
+        Where-Object { $v = GetVersionFromRelease $_; $v -ge [SemanticVersion]::new(6) } |`
+        Where-Object { Invoke-Command $ReleaseFilter -Args $releases,$_ }
+
     $assetUrls = $filteredReleases | ForEach-Object {
         $release = $_
         $asset = ($release.assets | Where-Object { $_.name -match "-win-x64.zip`$" })[0] # there should only be one
