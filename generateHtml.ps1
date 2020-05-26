@@ -8,8 +8,8 @@ function Wrap {
     return "<section>$($Html -join "`n")</section>"
 }
 
-$testScripts = Get-ChildItem $PSScriptRoot "generators\*.ps1"
-$testScriptHtml = $testScripts | ForEach-Object {
+$scripts = Get-ChildItem $PSScriptRoot "example-scripts\*.ps1"
+$scriptHtml = $scripts | ForEach-Object {
     $script = $_
     Write-Host
     Write-Host "============$($script.BaseName)============"
@@ -52,4 +52,4 @@ $htmlSuffix = @'
 </html>
 '@
 
-Write-Output "$htmlPrefix $testScriptHtml $htmlSuffix"
+Write-Output "$htmlPrefix $scriptHtml $htmlSuffix"
