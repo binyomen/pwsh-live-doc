@@ -25,6 +25,7 @@ body {
     border-collapse: collapse;
     border: var(--table-border);
 
+    width: 100%;
     margin-left: auto;
     margin-right: auto;
 }
@@ -36,8 +37,4 @@ body {
 
 .output-text, .code-view {
     overflow: auto;
-}
-
-.output-text {
-    display: inline;
 }
