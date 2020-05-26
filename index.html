@@ -17,11 +17,11 @@
                 <p id="versions-tested-line">Versions tested: <span class="tested-version">5.1.1007</span>, <span class="tested-version">6.0.0</span>, <span class="tested-version">6.0.1</span>, <span class="tested-version">6.0.2</span>, <span class="tested-version">6.0.3</span>, <span class="tested-version">6.0.4</span>, <span class="tested-version">6.0.5</span>, <span class="tested-version">6.1.0</span>, <span class="tested-version">6.1.1</span>, <span class="tested-version">6.1.2</span>, <span class="tested-version">6.1.3</span>, <span class="tested-version">6.1.4</span>, <span class="tested-version">6.1.5</span>, <span class="tested-version">6.1.6</span>, <span class="tested-version">6.2.0</span>, <span class="tested-version">6.2.1</span>, <span class="tested-version">6.2.2</span>, <span class="tested-version">6.2.3</span>, <span class="tested-version">6.2.4</span>, <span class="tested-version">6.2.5</span>, <span class="tested-version">7.0.0</span>, <span class="tested-version">7.0.1</span></p>
             </header>
             <main> <section><h2>Variable $? in parentheses</h2>
-<p>In PowerShell, the <code>$?</code> variable represents the exit status of the
-previous command. If it's true, the command succeeded. If it's false, the
-command failed. However, you need to be careful if using the variable, since
-enclosing a command in parentheses can reset <code>$?</code> to true in
-PowerShell 5 and earlier.</p>
+<p>In PowerShell, the <code>$?</code> variable represents the exit status of the previous
+command. If it's true, the command succeeded. If it's false, the command
+failed. However, you need to be careful if using the variable, since enclosing
+a command in parentheses can reset <code>$?</code> to true in PowerShell 5 and earlier.</p>
+
 <pre class="code-view"><code class="powershell">$local:ErrorActionPreference = "SilentlyContinue"
 
 Write-Error error
@@ -32,10 +32,10 @@ Write-Output "inside of parentheses: `$? = $?"
 </code></pre><table class="output-table"><caption>Output by version</caption><thead><tr><th>5.x, 6.x</th> <th>7.x</th></tr></thead><tbody><tr><td><pre class="output-text">outside of parentheses: $? = False
 inside of parentheses: $? = True</pre></td><td><pre class="output-text">outside of parentheses: $? = False
 inside of parentheses: $? = False</pre></td></tr></tbody></table></section> <section><h2>The WriteError function</h2>
-<p>When <code>$ErrorActionPreference</code> is <code>Stop</code>,
-<code>$PSCmdlet.WriteError</code> exits the current advanced function and
-throws. However, the exception it throws is not catchable from within the
-advanced function.</p>
+<p>When <code>$ErrorActionPreference</code> is <code>Stop</code>, <code>$PSCmdlet.WriteError</code> exits the
+current advanced function and throws. However, the exception it throws is not
+catchable from within the advanced function.</p>
+
 <pre class="code-view"><code class="powershell">function TestWriteErrorFunction {
     [CmdletBinding()]
     param()
@@ -56,8 +56,9 @@ try {
     Write-Output "caught outside the cmdlet: $_"
 }
 </code></pre><table class="output-table"><caption>Output by version</caption><thead><tr><th>5.x, 6.x, 7.x</th></tr></thead><tbody><tr><td><pre class="output-text">caught outside the cmdlet: error in try</pre></td></tr></tbody></table>
-<p><code>Write-Error</code>, on the other hand, is catchable inside the function,
-for both advanced and basic functions.</p>
+<p><code>Write-Error</code>, on the other hand, is catchable inside the function, for both
+advanced and basic functions.</p>
+
 <pre class="code-view"><code class="powershell">function TestWriteErrorCmdletAdvanced {
     [CmdletBinding()]
     param()
@@ -106,7 +107,61 @@ after the try-catch
 
 testing basic function
 caught inside the cmdlet: error in try
-after the try-catch</pre></td></tr></tbody></table></section>             </main>
+after the try-catch</pre></td></tr></tbody></table>
+<p>The <code>WriteError</code> function differs from <code>Write-Error</code> in another way as well.
+When used inside a function, either advanced or basic, <code>Write-Error</code> will not
+set <code>$?</code> to false after the function exits. <code>WriteError</code>, on the other hand,
+will set <code>$?</code> to false after the function exits.</p>
+<p>Interestingly, <code>Write-Error</code> will set <code>$?</code> to false within its own scope.
+<code>WriteError</code>, however, won't touch <code>$?</code> until the function exits.</p>
+
+<pre class="code-view"><code class="powershell">function AdvancedWriteErrorCmdlet {
+    [CmdletBinding()]
+    param()
+
+    $local:ErrorActionPreference = "SilentlyContinue"
+    Write-Error "an error"
+
+    Write-Output "Inside advanced function calling Write-Error status: $?"
+}
+
+function BasicWriteErrorCmdlet {
+    param()
+
+    $local:ErrorActionPreference = "SilentlyContinue"
+    Write-Error "an error"
+
+    Write-Output "Inside basic function calling Write-Error status: $?"
+}
+
+function AdvancedWriteErrorFunction {
+    [CmdletBinding()]
+    param()
+
+    $local:ErrorActionPreference = "SilentlyContinue"
+    $PSCmdlet.WriteError((NewErrorRecord "an error"))
+
+    Write-Output "Inside advanced function calling `$PSCmdlet.WriteError status: $?"
+}
+
+AdvancedWriteErrorCmdlet
+Write-Output "Advanced function calling Write-Error exited with: $?"
+Write-Output ""
+
+BasicWriteErrorCmdlet
+Write-Output "Basic function calling Write-Error exited with: $?"
+Write-Output ""
+
+AdvancedWriteErrorFunction
+Write-Output "Advanced function calling `$PSCmdlet.WriteError exited with: $?"
+</code></pre><table class="output-table"><caption>Output by version</caption><thead><tr><th>5.x, 6.x, 7.x</th></tr></thead><tbody><tr><td><pre class="output-text">Inside advanced function calling Write-Error status: False
+Advanced function calling Write-Error exited with: True
+
+Inside basic function calling Write-Error status: False
+Basic function calling Write-Error exited with: True
+
+Inside advanced function calling $PSCmdlet.WriteError status: True
+Advanced function calling $PSCmdlet.WriteError exited with: False</pre></td></tr></tbody></table></section>             </main>
         </div>
     </body>
 </html>
