@@ -3,10 +3,9 @@ Import-Module -Force $PSScriptRoot\..\docgen
 OutputTitle 'The WriteError function'
 
 OutputText @'
-When <code>$ErrorActionPreference</code> is <code>Stop</code>,
-<code>$PSCmdlet.WriteError</code> exits the current advanced function and
-throws. However, the exception it throws is not catchable from within the
-advanced function.
+When `$ErrorActionPreference` is `Stop`, `$PSCmdlet.WriteError` exits the
+current advanced function and throws. However, the exception it throws is not
+catchable from within the advanced function.
 '@
 
 OutputCode {
@@ -32,8 +31,8 @@ OutputCode {
 }
 
 OutputText @'
-<code>Write-Error</code>, on the other hand, is catchable inside the function,
-for both advanced and basic functions.
+`Write-Error`, on the other hand, is catchable inside the function, for both
+advanced and basic functions.
 '@
 
 OutputCode {
@@ -79,4 +78,56 @@ OutputCode {
     } catch {
         Write-Output "caught outside the cmdlet: $_"
     }
+}
+
+OutputText @'
+The `WriteError` function differs from `Write-Error` in another way as well.
+When used inside a function, either advanced or basic, `Write-Error` will not
+set `$?` to false after the function exits. `WriteError`, on the other hand,
+will set `$?` to false after the function exits.
+
+Interestingly, `Write-Error` will set `$?` to false within its own scope.
+`WriteError`, however, won't touch `$?` until the function exits.
+'@
+
+OutputCode {
+    function AdvancedWriteErrorCmdlet {
+        [CmdletBinding()]
+        param()
+
+        $local:ErrorActionPreference = "SilentlyContinue"
+        Write-Error "an error"
+
+        Write-Output "Inside advanced function calling Write-Error status: $?"
+    }
+
+    function BasicWriteErrorCmdlet {
+        param()
+
+        $local:ErrorActionPreference = "SilentlyContinue"
+        Write-Error "an error"
+
+        Write-Output "Inside basic function calling Write-Error status: $?"
+    }
+
+    function AdvancedWriteErrorFunction {
+        [CmdletBinding()]
+        param()
+
+        $local:ErrorActionPreference = "SilentlyContinue"
+        $PSCmdlet.WriteError((NewErrorRecord "an error"))
+
+        Write-Output "Inside advanced function calling `$PSCmdlet.WriteError status: $?"
+    }
+
+    AdvancedWriteErrorCmdlet
+    Write-Output "Advanced function calling Write-Error exited with: $?"
+    Write-Output ""
+
+    BasicWriteErrorCmdlet
+    Write-Output "Basic function calling Write-Error exited with: $?"
+    Write-Output ""
+
+    AdvancedWriteErrorFunction
+    Write-Output "Advanced function calling `$PSCmdlet.WriteError exited with: $?"
 }

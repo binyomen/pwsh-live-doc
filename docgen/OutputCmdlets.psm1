@@ -20,7 +20,7 @@ function OutputText {
         [String] $Text
     )
 
-    return "<p>" + $Text + "</p>"
+    return (ConvertFrom-Markdown -InputObject $Text).Html
 }
 
 function Deindent {
