@@ -42,8 +42,11 @@ block to the `downloadPwshPackages.ps1` -ReleaseFilter parameter. The script
 block will be passed two arguments: a list of all releases available on the
 repository greater than version 6 (because versions lower than 6 are the 0.x
 versions which don't have the assets we want) and the current release the
-filter is running on. If the script block returns true, the release will be
-included in the downloads.
+filter is running on. Releases are instances of `PSCustomObject` as specified
+by [the GitHub releases
+API](https://developer.github.com/v3/repos/releases/#list-releases-for-a-repository).
+If the script block returns true, the release will be included in the
+downloads.
 
 The script block will have access to all functions in
 `downloadPwshPackages.ps1`. You don't want to call most of them, but
