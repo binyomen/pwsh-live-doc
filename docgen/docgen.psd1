@@ -13,5 +13,7 @@ NestedModules = @(
 
 CmdletsToExport = @(
     "OutputText",
-    "OutputCode")
+    "OutputCode",
+    "GetPowerShellExesToTest",
+    "GetExeVersion")
 }

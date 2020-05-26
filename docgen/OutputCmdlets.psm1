@@ -8,6 +8,7 @@ function OutputTitle {
         [String] $Text
     )
 
+    Write-Host "Running tests for '$Text'"
     return "<h2>$Text</h2>"
 }
 
@@ -60,6 +61,8 @@ function OutputCode {
     $outputToVersionMap = @{}
     $allVersions = @()
     foreach ($exe in $exesToTest) {
+        Write-Host "Running $exe"
+
         $commandOutput = InvokeExe $exe $Code.ToString()
         $stringCommandOutput = $commandOutput -join "`n"
         $formattedCommandOutput = "<pre class=`"output-text`">" + $stringCommandOutput + "</pre>"

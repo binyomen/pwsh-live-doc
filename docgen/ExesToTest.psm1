@@ -5,10 +5,11 @@ function GetPowerShellExesToTest {
     [OutputType([String[]])]
     param()
 
-    return @(
-        "pwsh",
-        "powershell"
-    )
+    $packageDir = "$PSScriptRoot\..\pwsh-packages"
+    $packages = Get-ChildItem $packageDir
+    $packageExes = $packages | ForEach-Object { "$($_.FullName)\pwsh.exe" }
+
+    return @("powershell") + $packageExes
 }
 
 function GetExeVersion {

@@ -6,10 +6,18 @@ body {
     font-size: large;
 }
 
-#main-content {
+#content {
     width: 50%;
     margin-left: auto;
     margin-right: auto;
+}
+
+#versions-tested-line {
+    font-variant-caps: small-caps;
+}
+
+.tested-version {
+    margin: 4px;
 }
 
 .output-table {
