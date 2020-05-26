@@ -55,7 +55,7 @@ For example, if you only wanted to download version 7.0.0, you could do:
 ```powershell
 .\downloadPwshPackages.ps1 -ReleaseFilter {
     param($AllReleases, $ReleaseToCheck)
-    $v = GetVersionFromRelease($AllReleases)
+    $v = GetVersionFromRelease($ReleaseToCheck)
     return $v -eq [System.Management.Automation.SemanticVersion]::new(7, 0, 0)
 }
 ```
