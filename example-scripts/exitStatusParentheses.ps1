@@ -6,7 +6,7 @@ OutputText @'
 In PowerShell, the `$?` variable represents the exit status of the previous
 command. If it's true, the command succeeded. If it's false, the command
 failed. However, you need to be careful if using the variable, since enclosing
-a command in parentheses can reset `$?` to true in PowerShell 5 and earlier.
+a command in parentheses can reset `$?` to true in PowerShell 6 and earlier.
 '@
 
 OutputCode {
