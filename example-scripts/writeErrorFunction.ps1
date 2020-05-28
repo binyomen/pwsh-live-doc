@@ -6,6 +6,11 @@ OutputText @'
 When `$ErrorActionPreference` is `Stop`, `$PSCmdlet.WriteError` exits the
 current advanced function and throws. However, the exception it throws is not
 catchable from within the advanced function.
+
+It's worth noting that in PowerShell 2, the exception is caught both inside the
+function and outside the function. Inside the function we catch a "The pipeline
+has been stopped." error, and then continue execution within the function. When
+the function exits, we then throw the original exception.
 '@
 
 OutputCode {
@@ -17,7 +22,7 @@ OutputCode {
         try {
             $PSCmdlet.WriteError((NewErrorRecord "error in try"))
         } catch {
-            Write-Output "caught inside the cmdlet: $_"
+            Write-Output "caught inside the function: $_"
         }
 
         Write-Output "after the try-catch"
@@ -26,7 +31,7 @@ OutputCode {
     try {
         TestWriteErrorFunction
     } catch {
-        Write-Output "caught outside the cmdlet: $_"
+        Write-Output "caught outside the function: $_"
     }
 }
 
@@ -44,7 +49,7 @@ OutputCode {
         try {
             Write-Error "error in try"
         } catch {
-            Write-Output "caught inside the cmdlet: $_"
+            Write-Output "caught inside the function: $_"
         }
 
         Write-Output "after the try-catch"
@@ -57,7 +62,7 @@ OutputCode {
         try {
             Write-Error "error in try"
         } catch {
-            Write-Output "caught inside the cmdlet: $_"
+            Write-Output "caught inside the function: $_"
         }
 
         Write-Output "after the try-catch"
@@ -67,7 +72,7 @@ OutputCode {
     try {
         TestWriteErrorCmdletAdvanced
     } catch {
-        Write-Output "caught outside the cmdlet: $_"
+        Write-Output "caught outside the function: $_"
     }
 
     Write-Output ""
@@ -76,7 +81,7 @@ OutputCode {
     try {
         TestWriteErrorCmdletBasic
     } catch {
-        Write-Output "caught outside the cmdlet: $_"
+        Write-Output "caught outside the function: $_"
     }
 }
 
