@@ -64,8 +64,7 @@ function OutputCode {
         Write-Host "Running $exe"
 
         $commandOutput = InvokeExe $exe $Code.ToString()
-        $stringCommandOutput = $commandOutput -join "`n"
-        $formattedCommandOutput = "<pre class=`"output-text`">" + $stringCommandOutput + "</pre>"
+        $formattedCommandOutput = "<pre class=`"output-text`">" + $commandOutput + "</pre>"
 
         if (-not $outputToVersionMap.ContainsKey($formattedCommandOutput)) {
             $outputToVersionMap[$formattedCommandOutput] = @()
