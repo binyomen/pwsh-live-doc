@@ -63,18 +63,17 @@ For example, if you only wanted to download version 7.0.0, you could do:
 }
 ```
 
-### Run generateHtml.ps1
+### Run buildSite.ps1
 
-This will generate the HTML for the site, using all the PowerShell versions in
-`pwsh-packages`. This script outputs the HTML to stdout, so if you want it say
-in index.html you can run `.\generateHtml.ps1 > index.html`.
+This will generate the files for the site, using all the PowerShell versions in
+`pwsh-packages`. This script outputs the site to the `webroot` directory.
 
 ### View the site locally
 
-If you generated index.html in the previous step, the root of the repository
-can now be the webroot of the site. Run a static file server like
-[http-server](https://www.npmjs.com/package/http-server) in the repository's
-root and point your browser to wherever it says to.
+If you ran `buildSite.ps1`, the `webroot` directory will now contain the root
+of the site. Point a static file server like
+[http-server](https://www.npmjs.com/package/http-server) to `webroot` and view
+the site from `localhost` in your browser.
 
 ## Development
 
@@ -97,7 +96,7 @@ importing docgen.
 
 #### OutputText
 
-This function takes a string of markdown code. This markdown is generated into
+This function takes a string of markdown code. This markdown is translated into
 HTML on the page.
 
 #### OutputCode
@@ -115,13 +114,11 @@ outputs from the PowerShell processes, grouped by PowerShell version.
 
 ### HTML generation
 
-The actual process of generating the site begins with the `generateHtml.ps1`
-script. This script runs all scripts in `example-scripts` to generate their
-individual `<section>`s and puts the output within the context of an HTML
-document.
+The entry point for generating the site is the `buildSite.ps1` script. This
+script runs all scripts in `example-scripts` and uses the output to build the
+site.
 
-The bulk of HTML generation occurs in the docgen module, specifically
-`OutputCode`.
+The bulk of site logic generation is in the docgen module.
 
 ### Downloading PowerShell packages
 

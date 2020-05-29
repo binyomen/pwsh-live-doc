@@ -52,4 +52,12 @@ $htmlSuffix = @'
 </html>
 '@
 
-Write-Output "$htmlPrefix $scriptHtml $htmlSuffix"
+$html = "$htmlPrefix$scriptHtml$htmlSuffix"
+
+$webrootPath = "$PSScriptRoot\webroot"
+if (-not (Test-Path $webrootPath)) {
+    mkdir $webrootPath
+}
+
+Set-Content $webrootPath\index.html $html
+Copy-Item $PSScriptRoot\style.css $webrootPath
