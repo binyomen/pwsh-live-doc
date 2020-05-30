@@ -1,6 +1,25 @@
+using namespace System.IO
 using namespace System.Management.Automation
 
-function OutputTitle {
+function GetIndent {
+    [CmdletBinding()]
+    [OutputType([Byte])]
+    param(
+        [Parameter(Mandatory)]
+        [String] $Line
+    )
+
+    [Byte] $indent = 0
+    foreach ($char in $line.ToCharArray()) {
+        if ($char -ne " ") {
+            break
+        }
+        $indent += 1
+    }
+    return $indent
+}
+
+function FormatPageText {
     [CmdletBinding()]
     [OutputType([String])]
     param(
@@ -8,8 +27,31 @@ function OutputTitle {
         [String] $Text
     )
 
-    Write-Host "Running tests for '$Text'"
-    return "<h2>$Text</h2>"
+    [String] $normalizedText = $Text -replace "`r", ""
+    [String[]] $lines = $normalizedText -split "`n"
+
+    # Remove any blank leading or ending lines.
+    while ($lines.Length -gt 0) {
+        if ($lines[0].Trim().Length -gt 0) {
+            break
+        }
+        $lines = $lines[1..($lines.Length - 1)]
+    }
+    while ($lines.Length -gt 0) {
+        if ($lines[$lines.Length - 1].Trim().Length -gt 0) {
+            break
+        }
+        $lines = $lines[0..($lines.Length - 2)]
+    }
+
+    [Byte] $minIndent = ($lines |`
+        Where-Object { $_.Length -gt 0 } |`
+        ForEach-Object { GetIndent $_ } |`
+        Measure-Object -Minimum).Minimum
+    [String[]] $deindentedLines = $lines | ForEach-Object { $_[$minIndent..($_.Length - 1)] -join "" }
+
+    [String] $formattedText = $deindentedLines -join "`n"
+    return $formattedText
 }
 
 function OutputText {
@@ -20,24 +62,8 @@ function OutputText {
         [String] $Text
     )
 
-    return (ConvertFrom-Markdown -InputObject $Text).Html
-}
-
-function Deindent {
-    [CmdletBinding()]
-    [OutputType([String])]
-    param(
-        [Parameter(Mandatory)]
-        [String] $StringToDeindent
-    )
-
-    $lines = $StringToDeindent -split "`n"
-
-    # there's always a blank line first
-    $linesWithoutFirstLine = $lines[1..$lines.Length]
-
-    $deindentedLines = $linesWithoutFirstLine -split "`n" | ForEach-Object { $_[4..$_.Length] -join "" }
-    $deindentedLines -join "`n"
+    $formattedText = FormatPageText $Text
+    return (ConvertFrom-Markdown -InputObject $formattedText).Html
 }
 
 function OutputCode {
@@ -49,8 +75,8 @@ function OutputCode {
     )
 
     $codeAsString = $Code.ToString()
-    $codeDeindented = Deindent $codeAsString
-    $formattedCode = "<pre class=`"code-view`"><code class=`"powershell`">" + $codeDeindented + "</code></pre>"
+    $formattedCode = FormatPageText $codeAsString
+    $codeHtml = "<pre class=`"code-view`"><code class=`"powershell`">" + $formattedCode + "</code></pre>"
 
     $outputTableHtml = "<table class=`"output-table`"><caption>Output by version</caption><thead><tr>"
 
@@ -95,5 +121,25 @@ function OutputCode {
 
     $outputTableHtml += "</tr></tbody></table>"
 
-    return $formattedCode + $outputTableHtml
+    return $codeHtml + $outputTableHtml
+}
+
+function OutputPage {
+    [CmdletBinding()]
+    [OutputType([String])]
+    param(
+        [Parameter(Mandatory)]
+        [FileInfo] $PageModuleFile
+    )
+
+    Import-Module $PageModuleFile -Force
+
+    $title = GetTitle
+    Write-Host
+    Write-Host "============$($PageModuleFile.Name)============"
+    Write-Host "Generating page for '$title'"
+    $pageHtml = (RunPage) -join "`n"
+    Write-Host "==========================================="
+
+    return "<section><h2>$title</h2>$pageHtml</section>"
 }

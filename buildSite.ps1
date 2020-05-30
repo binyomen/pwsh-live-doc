@@ -1,25 +1,8 @@
-function Wrap {
-    [CmdletBinding()]
-    [OutputType([String])]
-    param(
-        [String[]] $Html
-    )
-
-    return "<section>$($Html -join "`n")</section>"
-}
-
-$scripts = Get-ChildItem $PSScriptRoot "example-scripts\*.ps1"
-$scriptHtml = $scripts | ForEach-Object {
-    $script = $_
-    Write-Host
-    Write-Host "============$($script.BaseName)============"
-    $result = & $script.FullName
-    Write-Host "==========================================="
-
-    return Wrap $result
-}
-
 Import-Module $PSScriptRoot\docgen -Force
+
+$pageModules = Get-ChildItem $PSScriptRoot "example-pages\*.psm1"
+$scriptHtml = $pageModules | ForEach-Object { OutputPage $_ }
+
 $versionsTested = GetPowerShellExesToTest | ForEach-Object { GetExeVersion $_ } | Sort-Object
 $versionsTestedHtml = ($versionsTested | ForEach-Object { "<span class=`"tested-version`">$_</span>" }) -join ", "
 
