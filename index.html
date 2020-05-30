@@ -16,11 +16,11 @@
                 <h1>PowerShell live documentation</h1>
                 <p id="versions-tested-line">Versions tested: <span class="tested-version">2.0.0</span>, <span class="tested-version">5.1.1007</span>, <span class="tested-version">6.0.0</span>, <span class="tested-version">6.0.1</span>, <span class="tested-version">6.0.2</span>, <span class="tested-version">6.0.3</span>, <span class="tested-version">6.0.4</span>, <span class="tested-version">6.0.5</span>, <span class="tested-version">6.1.0</span>, <span class="tested-version">6.1.1</span>, <span class="tested-version">6.1.2</span>, <span class="tested-version">6.1.3</span>, <span class="tested-version">6.1.4</span>, <span class="tested-version">6.1.5</span>, <span class="tested-version">6.1.6</span>, <span class="tested-version">6.2.0</span>, <span class="tested-version">6.2.1</span>, <span class="tested-version">6.2.2</span>, <span class="tested-version">6.2.3</span>, <span class="tested-version">6.2.4</span>, <span class="tested-version">6.2.5</span>, <span class="tested-version">7.0.0</span>, <span class="tested-version">7.0.1</span></p>
             </header>
-            <main><section><h2>Variable $? in parentheses</h2>
-<p>In PowerShell, the <code>$?</code> variable represents the exit status of the previous
+            <main><section><h2>Variable $? in parentheses</h2><p>In PowerShell, the <code>$?</code> variable represents the exit status of the previous
 command. If it's true, the command succeeded. If it's false, the command
-failed. However, you need to be careful if using the variable, since enclosing
-a command in parentheses can reset <code>$?</code> to true in PowerShell 6 and earlier.</p>
+failed. However, you need to be careful if using the variable, since
+enclosing a command in parentheses can reset <code>$?</code> to true in PowerShell 6
+and earlier.</p>
 
 <pre class="code-view"><code class="powershell">$local:ErrorActionPreference = "SilentlyContinue"
 
@@ -28,17 +28,15 @@ Write-Error error
 Write-Output "outside of parentheses: `$? = $?"
 
 (Write-Error error)
-Write-Output "inside of parentheses: `$? = $?"
-</code></pre><table class="output-table"><caption>Output by version</caption><thead><tr><th>2.x, 5.x, 6.x</th> <th>7.x</th></tr></thead><tbody><tr><td><pre class="output-text">outside of parentheses: $? = False
+Write-Output "inside of parentheses: `$? = $?"</code></pre><table class="output-table"><caption>Output by version</caption><thead><tr><th>2.x, 5.x, 6.x</th> <th>7.x</th></tr></thead><tbody><tr><td><pre class="output-text">outside of parentheses: $? = False
 inside of parentheses: $? = True</pre></td><td><pre class="output-text">outside of parentheses: $? = False
-inside of parentheses: $? = False</pre></td></tr></tbody></table></section> <section><h2>The WriteError function</h2>
-<p>When <code>$ErrorActionPreference</code> is <code>Stop</code>, <code>$PSCmdlet.WriteError</code> exits the
-current advanced function and throws. However, the exception it throws is not
-catchable from within the advanced function.</p>
-<p>It's worth noting that in PowerShell 2, the exception is caught both inside the
-function and outside the function. Inside the function we catch a &quot;The pipeline
-has been stopped.&quot; error, and then continue execution within the function. When
-the function exits, we then throw the original exception.</p>
+inside of parentheses: $? = False</pre></td></tr></tbody></table></section> <section><h2>The WriteError function</h2><p>When <code>$ErrorActionPreference</code> is <code>Stop</code>, <code>$PSCmdlet.WriteError</code> exits the
+current advanced function and throws. However, the exception it throws is
+not catchable from within the advanced function.</p>
+<p>It's worth noting that in PowerShell 2, the exception is caught both inside
+the function and outside the function. Inside the function we catch a &quot;The
+pipeline has been stopped.&quot; error, and then continue execution within the
+function. When the function exits, we then throw the original exception.</p>
 
 <pre class="code-view"><code class="powershell">function TestWriteErrorFunction {
     [CmdletBinding()]
@@ -58,12 +56,11 @@ try {
     TestWriteErrorFunction
 } catch {
     Write-Output "caught outside the function: $_"
-}
-</code></pre><table class="output-table"><caption>Output by version</caption><thead><tr><th>2.x</th> <th>5.x, 6.x, 7.x</th></tr></thead><tbody><tr><td><pre class="output-text">caught inside the function: The pipeline has been stopped.
+}</code></pre><table class="output-table"><caption>Output by version</caption><thead><tr><th>2.x</th> <th>5.x, 6.x, 7.x</th></tr></thead><tbody><tr><td><pre class="output-text">caught inside the function: The pipeline has been stopped.
 after the try-catch
 caught outside the function: error in try</pre></td><td><pre class="output-text">caught outside the function: error in try</pre></td></tr></tbody></table>
-<p><code>Write-Error</code>, on the other hand, is catchable inside the function, for both
-advanced and basic functions.</p>
+<p><code>Write-Error</code>, on the other hand, is catchable inside the function, for
+both advanced and basic functions.</p>
 
 <pre class="code-view"><code class="powershell">function TestWriteErrorCmdletAdvanced {
     [CmdletBinding()]
@@ -106,18 +103,17 @@ try {
     TestWriteErrorCmdletBasic
 } catch {
     Write-Output "caught outside the function: $_"
-}
-</code></pre><table class="output-table"><caption>Output by version</caption><thead><tr><th>2.x, 5.x, 6.x, 7.x</th></tr></thead><tbody><tr><td><pre class="output-text">testing advanced function
+}</code></pre><table class="output-table"><caption>Output by version</caption><thead><tr><th>2.x, 5.x, 6.x, 7.x</th></tr></thead><tbody><tr><td><pre class="output-text">testing advanced function
 caught inside the function: error in try
 after the try-catch
 
 testing basic function
 caught inside the function: error in try
 after the try-catch</pre></td></tr></tbody></table>
-<p>The <code>WriteError</code> function differs from <code>Write-Error</code> in another way as well.
-When used inside a function, either advanced or basic, <code>Write-Error</code> will not
-set <code>$?</code> to false after the function exits. <code>WriteError</code>, on the other hand,
-will set <code>$?</code> to false after the function exits.</p>
+<p>The <code>WriteError</code> function differs from <code>Write-Error</code> in another way as
+well. When used inside a function, either advanced or basic, <code>Write-Error</code>
+will not set <code>$?</code> to false after the function exits. <code>WriteError</code>, on the
+other hand, will set <code>$?</code> to false after the function exits.</p>
 <p>Interestingly, <code>Write-Error</code> will set <code>$?</code> to false within its own scope.
 <code>WriteError</code>, however, won't touch <code>$?</code> until the function exits.</p>
 
@@ -159,8 +155,7 @@ Write-Output "Basic function calling Write-Error exited with: $?"
 Write-Output ""
 
 AdvancedWriteErrorFunction
-Write-Output "Advanced function calling `$PSCmdlet.WriteError exited with: $?"
-</code></pre><table class="output-table"><caption>Output by version</caption><thead><tr><th>2.x, 5.x, 6.x, 7.x</th></tr></thead><tbody><tr><td><pre class="output-text">Inside advanced function calling Write-Error status: False
+Write-Output "Advanced function calling `$PSCmdlet.WriteError exited with: $?"</code></pre><table class="output-table"><caption>Output by version</caption><thead><tr><th>2.x, 5.x, 6.x, 7.x</th></tr></thead><tbody><tr><td><pre class="output-text">Inside advanced function calling Write-Error status: False
 Advanced function calling Write-Error exited with: True
 
 Inside basic function calling Write-Error status: False
