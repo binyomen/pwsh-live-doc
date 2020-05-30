@@ -1,12 +1,18 @@
+using namespace System.IO
+using namespace System.Management.Automation
+
+Set-StrictMode -Version Latest
+$script:ErrorActionPreference = "Stop"
+
 Import-Module $PSScriptRoot\docgen -Force
 
-$pageModules = Get-ChildItem $PSScriptRoot "example-pages\*.psm1"
-$scriptHtml = $pageModules | ForEach-Object { OutputPage $_ }
+[FileInfo[]] $pageModules = Get-ChildItem $PSScriptRoot "example-pages\*.psm1"
+[String[]] $scriptHtml = $pageModules | ForEach-Object { OutputPage $_ }
 
-$versionsTested = GetPowerShellExesToTest | ForEach-Object { GetExeVersion $_ } | Sort-Object
-$versionsTestedHtml = ($versionsTested | ForEach-Object { "<span class=`"tested-version`">$_</span>" }) -join ", "
+[SemanticVersion[]] $versionsTested = GetPowerShellExesToTest | ForEach-Object { GetExeVersion $_ } | Sort-Object
+[String] $versionsTestedHtml = ($versionsTested | ForEach-Object { "<span class=`"tested-version`">$_</span>" }) -join ", "
 
-$htmlPrefix = @"
+[String] $htmlPrefix = @"
 <!DOCTYPE html>
 <html lang="en-US">
     <head>
@@ -28,19 +34,18 @@ $htmlPrefix = @"
             <main>
 "@
 
-$htmlSuffix = @'
+[String] $htmlSuffix = @'
             </main>
         </div>
     </body>
 </html>
 '@
 
-$html = "$htmlPrefix$scriptHtml$htmlSuffix"
+[String] $html = "$htmlPrefix$scriptHtml$htmlSuffix"
 
-$webrootPath = "$PSScriptRoot\webroot"
-if (-not (Test-Path $webrootPath)) {
-    mkdir $webrootPath
-}
+[String] $webrootPath = "$PSScriptRoot\webroot"
+Remove-Item $webrootPath -Recurse -Force -ErrorAction "SilentlyContinue"
+mkdir $webrootPath > $null
 
 Set-Content $webrootPath\index.html $html
 Copy-Item $PSScriptRoot\style.css $webrootPath

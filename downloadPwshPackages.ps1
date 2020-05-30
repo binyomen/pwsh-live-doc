@@ -1,4 +1,3 @@
-using namespace System.Collections.Generic
 using namespace System.Management.Automation
 
 [CmdletBinding()]
@@ -7,14 +6,15 @@ param(
     [ScriptBlock] $ReleaseFilter = {
         param($AllReleases, $ReleaseToCheck)
 
-        $version = GetVersionFromRelease($ReleaseToCheck)
+        [SemanticVersion] $version = GetVersionFromRelease($ReleaseToCheck)
         return (-not $ReleaseToCheck.prerelease) -and
             ($version.PreReleaseLabel -eq $null) -and
             ($version.BuildLabel -eq $null)
     }
 )
 
-$local:ErrorActionPreference = "Stop"
+Set-StrictMode -Version Latest
+$script:ErrorActionPreference = "Stop"
 
 # This function is in scope here, and so it can be used in any script blocks
 # passed to $ReleaseFilter.
@@ -25,8 +25,8 @@ function GetVersionFromRelease {
         [PSCustomObject] $Release
     )
 
-    $tagName = $Release.tag_name
-    $versionString = $tagName[1..$tagName.length] -join ""
+    [String] $tagName = $Release.tag_name
+    [String] $versionString = $tagName[1..($tagName.Length - 1)] -join ""
     return [SemanticVersion]::new($versionString)
 }
 
@@ -37,14 +37,14 @@ function GetNextUrl {
         [String] $Link
     )
 
-    $items = $Link -split ","
+    [String[]] $items = $Link -split ","
     foreach ($item in $items) {
         if ($item -match "<(.+)>\s*;\s*rel=`"next`"") {
             return $matches[1]
         }
     }
 
-    return $null
+    return ""
 }
 
 function WriteRateLimit {
@@ -52,15 +52,15 @@ function WriteRateLimit {
     [OutputType([Void])]
     param()
 
-    $rates = (Invoke-RestMethod "https://api.github.com/rate_limit")
-    $limit = $rates.resources.core.limit
-    $remaining = $rates.resources.core.remaining
-    $reset = $rates.resources.core.reset
+    [PSCustomObject] $rates = (Invoke-RestMethod "https://api.github.com/rate_limit")
+    [UInt32] $limit = $rates.resources.core.limit
+    [UInt32] $remaining = $rates.resources.core.remaining
+    [UInt64] $reset = $rates.resources.core.reset
 
-    $timeUntilReset = (Get-Date 01.01.1970) +`
+    [TimeSpan] $timeUntilReset = (Get-Date 01.01.1970) +`
         [TimeSpan]::FromSeconds($reset) -`
         (Get-Date).ToUniversalTime()
-    $resetString = "$($timeUntilReset.Hours)h$($timeUntilReset.Minutes)m$($timeUntilReset.Seconds)s from now"
+    [String] $resetString = "$($timeUntilReset.Hours)h$($timeUntilReset.Minutes)m$($timeUntilReset.Seconds)s from now"
 
     Write-Host "Rate limit:"
     Write-Host "Limit: $limit, Remaining: $remaining, Reset: $resetString"
@@ -71,24 +71,24 @@ function GetAllReleaseUrls {
     [OutputType([Tuple`3[[String], [String], [Int64]][]])]
     param()
 
-    $url = "https://api.github.com/repos/PowerShell/PowerShell/releases"
-    $releases = @()
+    [String] $url = "https://api.github.com/repos/PowerShell/PowerShell/releases"
+    [PSCustomObject[]] $releases = @()
     do {
         $releases += (Invoke-RestMethod $url -ResponseHeadersVariable headers)
         WriteRateLimit
 
         $url = GetNextUrl $headers["Link"][0] # there should only be one
-    } while ($url -ne $null)
+    } while ($url -ne "")
 
-    $filteredReleases = $releases |`
+    [PSCustomObject[]] $filteredReleases = $releases |`
         # We never want to consider releases with versions less than 6, since
         # they don't define the assets we're looking for.
-        Where-Object { $v = GetVersionFromRelease $_; $v -ge [SemanticVersion]::new(6) } |`
-        Where-Object { Invoke-Command $ReleaseFilter -Args $releases,$_ }
+        Where-Object { [SemanticVersion] $v = GetVersionFromRelease $_; $v -ge [SemanticVersion]::new(6) } |`
+        Where-Object { Invoke-Command $ReleaseFilter -Args $releases, $_ }
 
-    $assetUrls = $filteredReleases | ForEach-Object {
-        $release = $_
-        $asset = ($release.assets | Where-Object { $_.name -match "-win-x64.zip`$" })[0] # there should only be one
+    [Tuple`3[[String], [String], [Int64]][]] $assetUrls = $filteredReleases | ForEach-Object {
+        [PSCustomObject] $release = $_
+        [PSCustomObject] $asset = ($release.assets | Where-Object { $_.name -match "-win-x64.zip`$" })[0] # there should only be one
         return [Tuple]::Create($release.tag_name, $asset.url, $asset.size)
     }
 
@@ -118,18 +118,18 @@ function DownloadUrls {
         [Tuple`3[[String], [String], [Int64]][]] $UrlPairs
     )
 
-    $packageDir = "$PSScriptRoot\pwsh-packages"
+    [String] $packageDir = "$PSScriptRoot\pwsh-packages"
     if (-not (Test-Path $packageDir)) {
         mkdir $packageDir > $null
     }
 
     foreach ($pair in $UrlPairs) {
-        $name = $pair.Item1
-        $url = $pair.Item2
-        $size = $pair.Item3
+        [String] $name = $pair.Item1
+        [String] $url = $pair.Item2
+        [Int64] $size = $pair.Item3
 
-        $extractPath = "$packageDir\$name"
-        $zipPath = "$extractPath.zip"
+        [String] $extractPath = "$packageDir\$name"
+        [String] $zipPath = "$extractPath.zip"
         if (-not (Test-Path $extractPath)) {
             Write-Host
 
@@ -146,5 +146,5 @@ function DownloadUrls {
     }
 }
 
-$urls = GetAllReleaseUrls
+[Tuple`3[[String], [String], [Int64]][]] $urls = GetAllReleaseUrls
 DownloadUrls $urls
