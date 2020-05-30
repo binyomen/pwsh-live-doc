@@ -1,3 +1,6 @@
+Set-StrictMode -Version Latest
+$script:ErrorActionPreference = "Stop"
+
 function NewErrorRecord {
     [CmdletBinding()]
     [OutputType([System.Management.Automation.ErrorRecord])]

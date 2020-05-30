@@ -1,5 +1,9 @@
+using namespace System.Collections.Generic
 using namespace System.IO
 using namespace System.Management.Automation
+
+Set-StrictMode -Version Latest
+$script:ErrorActionPreference = "Stop"
 
 function GetIndent {
     [CmdletBinding()]
@@ -48,7 +52,12 @@ function FormatPageText {
         Where-Object { $_.Length -gt 0 } |`
         ForEach-Object { GetIndent $_ } |`
         Measure-Object -Minimum).Minimum
-    [String[]] $deindentedLines = $lines | ForEach-Object { $_[$minIndent..($_.Length - 1)] -join "" }
+    [String[]] $deindentedLines = $lines |`
+        ForEach-Object {
+            $_.Length -gt 0 ?
+                $_[$minIndent..($_.Length - 1)] -join "" :
+                $_
+        }
 
     [String] $formattedText = $deindentedLines -join "`n"
     return $formattedText
@@ -62,7 +71,7 @@ function OutputText {
         [String] $Text
     )
 
-    $formattedText = FormatPageText $Text
+    [String] $formattedText = FormatPageText $Text
     return (ConvertFrom-Markdown -InputObject $formattedText).Html
 }
 
@@ -74,48 +83,48 @@ function OutputCode {
         [ScriptBlock] $Code
     )
 
-    $codeAsString = $Code.ToString()
-    $formattedCode = FormatPageText $codeAsString
-    $codeHtml = "<pre class=`"code-view`"><code class=`"powershell`">" + $formattedCode + "</code></pre>"
+    [String] $codeAsString = $Code.ToString()
+    [String] $formattedCode = FormatPageText $codeAsString
+    [String] $codeHtml = "<pre class=`"code-view`"><code class=`"powershell`">" + $formattedCode + "</code></pre>"
 
-    $outputTableHtml = "<table class=`"output-table`"><caption>Output by version</caption><thead><tr>"
+    [String] $outputTableHtml = "<table class=`"output-table`"><caption>Output by version</caption><thead><tr>"
 
-    $exesToTest = GetPowerShellExesToTest
+    [String[]] $exesToTest = GetPowerShellExesToTest
 
     # Create a map of output string to list of versions. This lets us group
     # versions by what their output is.
-    $outputToVersionMap = @{}
-    $allVersions = @()
+    [Dictionary`2[[String], [SemanticVersion[]]]] $outputToVersionMap = [Dictionary`2[[String], [SemanticVersion[]]]]::new()
+    [SemanticVersion[]] $allVersions = @()
     foreach ($exe in $exesToTest) {
         Write-Host "Running $exe"
 
-        $commandOutput = InvokeExe $exe $Code.ToString()
-        $formattedCommandOutput = "<pre class=`"output-text`">" + $commandOutput + "</pre>"
+        [String] $commandOutput = InvokeExe $exe $Code.ToString()
+        [String] $formattedCommandOutput = "<pre class=`"output-text`">" + $commandOutput + "</pre>"
 
         if (-not $outputToVersionMap.ContainsKey($formattedCommandOutput)) {
             $outputToVersionMap[$formattedCommandOutput] = @()
         }
 
-        $version = GetExeVersion $exe
+        [SemanticVersion] $version = GetExeVersion $exe
         $outputToVersionMap[$formattedCommandOutput] += $version
         $allVersions += $version
     }
 
     # Now create a map from version string to corresponding output. This lets
     # us sort the version strings without mismatching them with their outputs.
-    $versionStringToOutputMap = @{}
+    [Dictionary`2[[String], [String]]] $versionStringToOutputMap = [Dictionary`2[[String], [String]]]::new()
     foreach ($output in $outputToVersionMap.Keys) {
-        $generalizedVersions = GeneralizeVersions $allVersions $outputToVersionMap[$output] | Sort-Object
+        [String[]] $generalizedVersions = GeneralizeVersions $allVersions $outputToVersionMap[$output] | Sort-Object
         $versionStringToOutputMap["<th>$($generalizedVersions -join ", ")</th>"] = $output
     }
 
-    $sortedVersionKeys = $versionStringToOutputMap.Keys | Sort-Object
+    [String[]] $sortedVersionKeys = $versionStringToOutputMap.Keys | Sort-Object
     $outputTableHtml += "$sortedVersionKeys"
 
     $outputTableHtml += "</tr></thead><tbody><tr>"
 
-    foreach ($version in $sortedVersionKeys) {
-        $output = $versionStringToOutputMap[$version]
+    foreach ($versionString in $sortedVersionKeys) {
+        [String] $output = $versionStringToOutputMap[$versionString]
         $outputTableHtml += "<td>$output</td>"
     }
 
@@ -134,11 +143,11 @@ function OutputPage {
 
     Import-Module $PageModuleFile -Force
 
-    $title = GetTitle
+    [String] $title = GetTitle
     Write-Host
     Write-Host "============$($PageModuleFile.Name)============"
     Write-Host "Generating page for '$title'"
-    $pageHtml = (RunPage) -join "`n"
+    [String] $pageHtml = (RunPage) -join "`n"
     Write-Host "==========================================="
 
     return "<section><h2>$title</h2>$pageHtml</section>"

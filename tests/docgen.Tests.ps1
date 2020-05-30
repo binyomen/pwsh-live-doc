@@ -12,7 +12,7 @@ function global:V {
     $VersionStrings | ForEach-Object { [SemanticVersion]::new($_) }
 }
 
-$global:allVersions = (V `
+[SemanticVersion[]] $global:allVersions = (V `
     0.1.0,`
     0.2.0,`
     0.3.0,`
@@ -48,13 +48,13 @@ Describe "VersionTree" {
         }
 
         It "can add a single version" {
-            $tree = [VersionTree]::new()
+            [VersionTree] $tree = [VersionTree]::new()
             $tree.Add((V 1.2.3))
             $tree.ToString() | Should -Be "(root (1 (2 3)))"
         }
 
         It "can add multiple versions" {
-            $tree = [VersionTree]::new()
+            [VersionTree] $tree = [VersionTree]::new()
             foreach ($version in $allVersions) {
                 $tree.Add($version)
             }
@@ -63,7 +63,7 @@ Describe "VersionTree" {
         }
 
         It "can mark a single version" {
-            $tree = [VersionTree]::new()
+            [VersionTree] $tree = [VersionTree]::new()
             foreach ($version in $allVersions) {
                 $tree.Add($version)
             }
@@ -74,7 +74,7 @@ Describe "VersionTree" {
         }
 
         It "can mark multiple versions" {
-            $tree = [VersionTree]::new()
+            [VersionTree] $tree = [VersionTree]::new()
             foreach ($version in $allVersions) {
                 $tree.Add($version)
             }

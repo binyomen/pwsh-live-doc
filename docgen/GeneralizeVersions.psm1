@@ -1,5 +1,47 @@
 using namespace System.Management.Automation
 
+Set-StrictMode -Version Latest
+$script:ErrorActionPreference = "Stop"
+
+[Object] $script:RootValue = ""
+
+function ValuesEqual {
+    [CmdletBinding()]
+    [OutputType([Bool])]
+    param(
+        [Parameter(Mandatory)]
+        [Object] $Value1,
+        [Parameter(Mandatory)]
+        [Object] $Value2
+    )
+
+    return $Value1.ToString() -eq $Value2.ToString()
+}
+
+function IsValueRoot {
+    [CmdletBinding()]
+    [OutputType([Bool])]
+    param(
+        [Parameter(Mandatory)]
+        [Object] $Value
+    )
+
+    return ValuesEqual $Value $script:RootValue
+}
+
+function GetRest {
+    [CmdletBinding()]
+    [OutputType([Object[]])]
+    param(
+        [Parameter(Mandatory)]
+        [Object[]] $List # oooh, it's generic!
+    )
+
+    return $List.Count -gt 1 ?
+        $List[1..($List.Count - 1)] :
+        ,@()
+}
+
 class VersionNode {
     [VersionNode[]] hidden $Children
     [Object] hidden $Value
@@ -8,7 +50,7 @@ class VersionNode {
 
     VersionNode() {
         $this.Children = @()
-        $this.Value = $null
+        $this.Value = $script:RootValue
         $this.GeneralizeSuffix = ""
         $this.IsLeafInSubset = $false
     }
@@ -22,25 +64,25 @@ class VersionNode {
 
     [Void] AddNodesBelow([Tuple`2[[Object], [String]][]] $Values) {
         if ($Values.Count -gt 0) {
-            $first = $Values[0]
-            $rest = $Values[1..$Values.Count]
+            [Tuple`2[[Object], [String]]] $first = $Values[0]
+            [Tuple`2[[Object], [String]][]] $rest = GetRest $Values
 
             foreach ($child in $this.Children) {
-                if ($child.Value -eq $first.Item1) {
+                if (ValuesEqual $child.Value $first.Item1) {
                     $child.AddNodesBelow($rest)
                     return
                 }
             }
 
-            $newChild = [VersionNode]::new($first.Item1, $first.Item2)
+            [VersionNode] $newChild = [VersionNode]::new($first.Item1, $first.Item2)
             $newChild.AddNodesBelow($rest)
             $this.Children += $newChild
         }
     }
 
     [Void] MarkLeaf([Object[]] $Values) {
-        if ($Values[0] -eq $this.Value) {
-            $rest = $Values[1..$Values.Count]
+        if (ValuesEqual $Values[0] $this.Value) {
+            [Object[]] $rest = GetRest $Values
 
             if ($rest.Count -eq 0) {
                 $this.IsLeafInSubset = $true
@@ -60,13 +102,13 @@ class VersionNode {
                 return [Tuple]::Create([String[]] @(), $false)
             }
         } else {
-            $childResults = @()
-            $numChildrenFullyCovered = 0
+            [String[]] $childResults = @()
+            [Byte] $numChildrenFullyCovered = 0
 
             foreach ($child in $this.Children) {
-                $result = $child.Generalize()
+                [Tuple`2[[String[]], [Boolean]]] $result = $child.Generalize()
 
-                if ($result.Item1.Count -gt 0) {
+                if ($null -ne $result.Item1 -and $result.Item1.Count -gt 0) {
                     $childResults += $result.Item1
                 }
 
@@ -75,26 +117,26 @@ class VersionNode {
                 }
             }
 
-            $prefix = $this.Value -ne $null ? "$($this.Value)." : ""
+            [String] $prefix = (IsValueRoot $this.Value) ? "" : "$($this.Value)."
             if ($numChildrenFullyCovered -eq $this.Children.Count) {
-                $strings = $this.GeneralizeSuffix -ne "" ? "$prefix$($this.GeneralizeSuffix)" : $childResults
+                [String[]] $strings = $this.GeneralizeSuffix -ne "" ? @("$prefix$($this.GeneralizeSuffix)") : $childResults
                 return [Tuple]::Create([String[]] $strings, $true)
             } else {
-                $strings = $childResults | ForEach-Object { "$prefix$_" }
+                [String[]] $strings = $childResults | ForEach-Object { "$prefix$_" }
                 return [Tuple]::Create([String[]] $strings, $false)
             }
         }
     }
 
     [String] ToString() {
-        $stringValue = ($this.Value ?? "root").ToString()
+        [String] $stringValue = (IsValueRoot $this.Value) ? "root" : $this.Value.ToString()
 
         if ($this.Children.Count -eq 0) {
-            $mark = $this.IsLeafInSubset ? "*" : ""
+            [String] $mark = $this.IsLeafInSubset ? "*" : ""
             return "$stringValue$mark"
         } else {
-            $childStrings = $this.Children | ForEach-Object { $_.ToString() }
-            $childStringsCombined = $childStrings -join " "
+            [String[]] $childStrings = $this.Children | ForEach-Object { $_.ToString() }
+            [String] $childStringsCombined = $childStrings -join " "
             return "($stringValue $childStringsCombined)"
         }
     }
@@ -108,7 +150,7 @@ class VersionTree {
     }
 
     [Void] Add([SemanticVersion] $Version) {
-        $nodeValues = @(
+        [Tuple`2[[Object], [String]][]] $nodeValues = @(
             [Tuple]::Create([Object] $Version.Major, "x"),
             [Tuple]::Create([Object] $Version.Minor, "y"),
             [Tuple]::Create([Object] $Version.Patch, "")
@@ -117,8 +159,8 @@ class VersionTree {
     }
 
     [Void] MarkVersion([SemanticVersion] $Version) {
-        $nodeValues = @(
-            $null,
+        [Object[]] $nodeValues = @(
+            $script:RootValue,
             $Version.Major,
             $Version.Minor,
             $Version.Patch
@@ -145,7 +187,7 @@ function GeneralizeVersions {
         [SemanticVersion[]] $VersionSubset
     )
 
-    $tree = [VersionTree]::new()
+    [VersionTree] $tree = [VersionTree]::new()
     foreach ($version in $AllVersions) {
         $tree.Add($version)
     }
@@ -154,7 +196,7 @@ function GeneralizeVersions {
         $tree.MarkVersion($version)
     }
 
-    $generalizations = $tree.Generalize()
-    $filtered = $generalizations | ForEach-Object { $_ -replace ".0`$", "" }
+    [String[]] $generalizations = $tree.Generalize()
+    [String[]] $filtered = $generalizations | ForEach-Object { $_ -replace ".0`$", "" }
     return $filtered
 }
