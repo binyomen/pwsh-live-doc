@@ -1,6 +1,3 @@
-using namespace System.IO
-using namespace System.Management.Automation
-
 [String[]] $script:windowsPowershellExes = @(
     "powershell -Version 2",
     "powershell -Version 5.1"
