@@ -4,7 +4,7 @@ Run real code examples to generate empirical documentation of the complex
 nonsense that is PowerShell semantics. Deploy the documentation to a static web
 site.
 
-See <https://benweedon.github.io/pwsh-live-doc/> for the current live site.
+See <https://www.pwsh-live-doc.com/> for the current live site.
 
 ## Building locally
 
@@ -131,4 +131,4 @@ All the code for the package downloader can be found in
 
 All continuous integration is performed by GitHub Actions. The configuration
 files are in `.github\workflows\`. The workflows test the code, generate the
-site, and deploy it to GitHub Pages.
+site, and deploy it to Netlify.
