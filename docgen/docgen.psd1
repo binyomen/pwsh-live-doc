@@ -7,7 +7,10 @@ Description = "Helpers for generating pwsh-live-doc HTML"
 PowerShellVersion = "7.0"
 
 NestedModules = @(
-    "OutputCmdlets.ps1",
+    "util.ps1",
+    "OutputPage.ps1",
+    "OutputText.ps1",
+    "OutputCode.ps1",
     "GeneralizeVersions.ps1",
     "ExesToTest.ps1")
 
