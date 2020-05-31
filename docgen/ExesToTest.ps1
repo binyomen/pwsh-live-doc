@@ -1,10 +1,7 @@
 using namespace System.IO
 using namespace System.Management.Automation
 
-Set-StrictMode -Version Latest
-$script:ErrorActionPreference = "Stop"
-
-[String[]] $windowsPowershellExes = @(
+[String[]] $script:windowsPowershellExes = @(
     "powershell -Version 2",
     "powershell -Version 5.1"
 )

@@ -1,8 +1,5 @@
 using namespace System.Management.Automation
 
-Set-StrictMode -Version Latest
-$script:ErrorActionPreference = "Stop"
-
 [Object] $script:RootValue = ""
 
 function ValuesEqual {
