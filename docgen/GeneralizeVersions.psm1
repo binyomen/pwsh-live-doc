@@ -62,10 +62,10 @@ class VersionNode {
         $this.IsLeafInSubset = $false
     }
 
-    [Void] AddNodesBelow([Tuple`2[[Object], [String]][]] $Values) {
+    [Void] AddNodesBelow([Tuple[Object, String][]] $Values) {
         if ($Values.Count -gt 0) {
-            [Tuple`2[[Object], [String]]] $first = $Values[0]
-            [Tuple`2[[Object], [String]][]] $rest = GetRest $Values
+            [Tuple[Object, String]] $first = $Values[0]
+            [Tuple[Object, String][]] $rest = GetRest $Values
 
             foreach ($child in $this.Children) {
                 if (ValuesEqual $child.Value $first.Item1) {
@@ -94,7 +94,7 @@ class VersionNode {
         }
     }
 
-    [Tuple`2[[String[]], [Boolean]]] Generalize() {
+    [Tuple[[String[]], Boolean]] Generalize() {
         if ($this.Children.Count -eq 0) {
             if ($this.IsLeafInSubset) {
                 return [Tuple]::Create([String[]] @($this.Value.ToString()), $true)
@@ -106,7 +106,7 @@ class VersionNode {
             [Byte] $numChildrenFullyCovered = 0
 
             foreach ($child in $this.Children) {
-                [Tuple`2[[String[]], [Boolean]]] $result = $child.Generalize()
+                [Tuple[[String[]], Boolean]] $result = $child.Generalize()
 
                 if ($null -ne $result.Item1 -and $result.Item1.Count -gt 0) {
                     $childResults += $result.Item1
@@ -150,7 +150,7 @@ class VersionTree {
     }
 
     [Void] Add([SemanticVersion] $Version) {
-        [Tuple`2[[Object], [String]][]] $nodeValues = @(
+        [Tuple[Object, String][]] $nodeValues = @(
             [Tuple]::Create([Object] $Version.Major, "x"),
             [Tuple]::Create([Object] $Version.Minor, "y"),
             [Tuple]::Create([Object] $Version.Patch, "")

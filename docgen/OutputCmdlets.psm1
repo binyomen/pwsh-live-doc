@@ -93,7 +93,7 @@ function OutputCode {
 
     # Create a map of output string to list of versions. This lets us group
     # versions by what their output is.
-    [Dictionary`2[[String], [SemanticVersion[]]]] $outputToVersionMap = [Dictionary`2[[String], [SemanticVersion[]]]]::new()
+    [Dictionary[String, SemanticVersion[]]] $outputToVersionMap = [Dictionary[String, SemanticVersion[]]]::new()
     [SemanticVersion[]] $allVersions = @()
     foreach ($exe in $exesToTest) {
         Write-Host "Running $exe"
@@ -112,7 +112,7 @@ function OutputCode {
 
     # Now create a map from version string to corresponding output. This lets
     # us sort the version strings without mismatching them with their outputs.
-    [Dictionary`2[[String], [String]]] $versionStringToOutputMap = [Dictionary`2[[String], [String]]]::new()
+    [Dictionary[String, String]] $versionStringToOutputMap = [Dictionary[String, String]]::new()
     foreach ($output in $outputToVersionMap.Keys) {
         [String[]] $generalizedVersions = GeneralizeVersions $allVersions $outputToVersionMap[$output] | Sort-Object
         $versionStringToOutputMap["<th>$($generalizedVersions -join ", ")</th>"] = $output
