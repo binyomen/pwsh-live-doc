@@ -75,6 +75,25 @@ function OutputText {
     return (ConvertFrom-Markdown -InputObject $formattedText).Html
 }
 
+function RunPowerShellExe {
+    [CmdletBinding()]
+    [OutputType([Tuple[SemanticVersion, String][]])]
+    param(
+        [Parameter(Mandatory)]
+        [String] $Exe,
+        [Parameter(Mandatory)]
+        [String] $CodeToRun
+    )
+
+    Write-Host "Running $Exe"
+
+    [String] $commandOutput = InvokeExe $Exe $CodeToRun
+    [String] $formattedCommandOutput = "<pre class=`"output-text`">" + $commandOutput + "</pre>"
+
+    [SemanticVersion] $version = GetExeVersion $Exe
+    return [Tuple]::Create($version, $formattedCommandOutput)
+}
+
 function OutputCode {
     [CmdletBinding()]
     [OutputType([String])]
@@ -91,23 +110,28 @@ function OutputCode {
 
     [String[]] $exesToTest = GetPowerShellExesToTest
 
+    [Tuple[SemanticVersion, String][]] $powershellResults = $exesToTest | ForEach-Object -ThrottleLimit 8 -Parallel {
+        [String] $exe = $_
+
+        $docgen = Import-Module "$using:PSScriptRoot\..\docgen" -Force -PassThru
+        # Run in the context of the docgen module
+        return & $docgen { RunPowerShellExe $exe $using:codeAsString }
+    }
+
+    [SemanticVersion[]] $allVersions = $powershellResults | ForEach-Object { $_.Item1 }
+
     # Create a map of output string to list of versions. This lets us group
     # versions by what their output is.
     [Dictionary[String, SemanticVersion[]]] $outputToVersionMap = [Dictionary[String, SemanticVersion[]]]::new()
-    [SemanticVersion[]] $allVersions = @()
-    foreach ($exe in $exesToTest) {
-        Write-Host "Running $exe"
+    foreach ($tuple in $powershellResults) {
+        [SemanticVersion] $version = $tuple.Item1
+        [String] $output = $tuple.Item2
 
-        [String] $commandOutput = InvokeExe $exe $Code.ToString()
-        [String] $formattedCommandOutput = "<pre class=`"output-text`">" + $commandOutput + "</pre>"
-
-        if (-not $outputToVersionMap.ContainsKey($formattedCommandOutput)) {
-            $outputToVersionMap[$formattedCommandOutput] = @()
+        if (-not $outputToVersionMap.ContainsKey($output)) {
+            $outputToVersionMap[$output] = @()
         }
 
-        [SemanticVersion] $version = GetExeVersion $exe
-        $outputToVersionMap[$formattedCommandOutput] += $version
-        $allVersions += $version
+        $outputToVersionMap[$output] += $version
     }
 
     # Now create a map from version string to corresponding output. This lets
