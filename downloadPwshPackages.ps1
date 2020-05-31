@@ -68,7 +68,7 @@ function WriteRateLimit {
 
 function GetAllReleaseUrls {
     [CmdletBinding()]
-    [OutputType([Tuple`3[[String], [String], [Int64]][]])]
+    [OutputType([Tuple[String, String, Int64][]])]
     param()
 
     [String] $url = "https://api.github.com/repos/PowerShell/PowerShell/releases"
@@ -86,7 +86,7 @@ function GetAllReleaseUrls {
         Where-Object { [SemanticVersion] $v = GetVersionFromRelease $_; $v -ge [SemanticVersion]::new(6) } |`
         Where-Object { Invoke-Command $ReleaseFilter -Args $releases, $_ }
 
-    [Tuple`3[[String], [String], [Int64]][]] $assetUrls = $filteredReleases | ForEach-Object {
+    [Tuple[String, String, Int64][]] $assetUrls = $filteredReleases | ForEach-Object {
         [PSCustomObject] $release = $_
         [PSCustomObject] $asset = ($release.assets | Where-Object { $_.name -match "-win-x64.zip`$" })[0] # there should only be one
         return [Tuple]::Create($release.tag_name, $asset.url, $asset.size)
@@ -115,7 +115,7 @@ function DownloadUrls {
     [CmdletBinding()]
     [OutputType([Void])]
     param(
-        [Tuple`3[[String], [String], [Int64]][]] $UrlPairs
+        [Tuple[String, String, Int64][]] $UrlPairs
     )
 
     [String] $packageDir = "$PSScriptRoot\pwsh-packages"
@@ -146,5 +146,5 @@ function DownloadUrls {
     }
 }
 
-[Tuple`3[[String], [String], [Int64]][]] $urls = GetAllReleaseUrls
+[Tuple[String, String, Int64][]] $urls = GetAllReleaseUrls
 DownloadUrls $urls
