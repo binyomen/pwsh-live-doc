@@ -15,32 +15,40 @@ function WriteHtmlFile {
     Set-Content $filePath $Html
 }
 
+[PSCustomObject] $script:options = $null
+
 function GenerateSite {
     [CmdletBinding()]
     [OutputType([Void])]
     param(
         [Parameter(Mandatory)]
-        [ScriptBlock] $PageFilter
+        [ScriptBlock] $PageFilter,
+        [PSCustomObject] $Options
     )
 
-    [String] $projectRoot = "$PSScriptRoot\.."
+    $script:options = $Options
+    try {
+        [String] $projectRoot = "$PSScriptRoot\.."
 
-    [String] $webrootPath = "$projectRoot\webroot"
-    Remove-Item $webrootPath -Recurse -Force -ErrorAction "SilentlyContinue"
-    mkdir $webrootPath > $null
+        [String] $webrootPath = "$projectRoot\webroot"
+        Remove-Item $webrootPath -Recurse -Force -ErrorAction "SilentlyContinue"
+        mkdir $webrootPath > $null
 
-    [Page[]] $pages = Get-ChildItem "$projectRoot\example-pages\*.psm1" -Exclude "category.psm1" -Recurse |`
-        ForEach-Object { [Page]::new($_) }
+        [Page[]] $pages = Get-ChildItem "$projectRoot\example-pages\*.psm1" -Exclude "category.psm1" -Recurse |`
+            ForEach-Object { [Page]::new($_) }
 
-    # Write out the example page files.
-    $pages |`
-        Where-Object { Invoke-Command $PageFilter -Args $pages, $_ } |`
-        ForEach-Object { WriteHtmlFile $_.GetLinkPath() $_.GetHtml($pages) }
+        # Write out the example page files.
+        $pages |`
+            Where-Object { Invoke-Command $PageFilter -Args $pages, $_ } |`
+            ForEach-Object { WriteHtmlFile $_.GetLinkPath() $_.GetHtml($pages) }
 
-    # Write out the home page file.
-    [String] $homePageHtml = OutputHomePage $pages
-    WriteHtmlFile "index.html" $homePageHtml
+        # Write out the home page file.
+        [String] $homePageHtml = OutputHomePage $pages
+        WriteHtmlFile "index.html" $homePageHtml
 
-    # Copy static assets to the webroot.
-    Copy-Item "$projectRoot\static\*" $webrootPath -Recurse
+        # Copy static assets to the webroot.
+        Copy-Item "$projectRoot\static\*" $webrootPath -Recurse
+    } finally {
+        $script:options = $null
+    }
 }

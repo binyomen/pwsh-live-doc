@@ -12,7 +12,11 @@ function GetPowerShellExesToTest {
     [DirectoryInfo[]] $packages = Get-ChildItem $packageDir
     [String[]] $packageExes = $packages | ForEach-Object { "$($_.FullName)\pwsh.exe" }
 
-    return $windowsPowershellExes + $packageExes
+    if ($script:options.TestOnlyMajorVersions) {
+        return $windowsPowershellExes + ($packageExes | Where-Object { $_ -match "v[0-9]+\.0\.0" })
+    } else {
+        return $windowsPowershellExes + $packageExes
+    }
 }
 
 function RemoveBom {

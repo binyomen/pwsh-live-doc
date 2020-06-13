@@ -94,6 +94,10 @@ The -PageName parameter to `buildSite.ps1` is shorthand for:
 }
 ```
 
+The -TestOnlyMajorVersions parameter to `buildSite.ps1` will only run major
+versions of PowerShell (i.e. 2.0, 5.1, 6.0.0, 7.0.0, etc.). This helps save a
+lot of time when building locally.
+
 ### View the site locally
 
 If you ran `buildSite.ps1`, the `webroot` directory will now contain the root
