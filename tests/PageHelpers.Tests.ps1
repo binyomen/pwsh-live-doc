@@ -19,11 +19,11 @@ Describe 'TitleToUrlPathSegment' {
         It 'handles punctuation like commas' {
             TitleToUrlPathSegment 'hello, it''s me' | Should -Be 'hello,-it''s-me'
             TitleToUrlPathSegment 'this is a  :, and here''s a \' | Should -Be 'this-is-a-colon,-and-here''s-a-backslash'
-            TitleToUrlPathSegment 'The well-known variable $?, or status' | Should -Be 'The-well-dash-known-variable-$-question-mark,-or-status'
+            TitleToUrlPathSegment 'The well-known variable $?, or status' | Should -Be 'The-well-known-variable-$-question-mark,-or-status'
         }
 
         It 'spells out invalid characters' {
-            TitleToUrlPathSegment '<>:"/\|?*%-' | Should -Be 'left-angle-bracket-right-angle-bracket-colon-quotation-mark-slash-backslash-pipe-question-mark-star-percent-sign-dash'
+            TitleToUrlPathSegment '<>:"/\|?*%' | Should -Be 'left-angle-bracket-right-angle-bracket-colon-quotation-mark-slash-backslash-pipe-question-mark-star-percent-sign'
         }
     }
 }

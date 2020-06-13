@@ -20,7 +20,6 @@ function TitleToUrlPathSegment {
         '?' = 'question mark'
         '*' = 'star'
         '%' = 'percent sign'
-        '-' = 'dash'
     }
 
     [String] $seg = $Title.ToLower()
