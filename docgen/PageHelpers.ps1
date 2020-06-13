@@ -1,8 +1,6 @@
 # Needed for types in classes below.
 using namespace System.IO
 
-[String] $script:versionsTestedHtml = ""
-
 function TitleToUrlPathSegment {
     [CmdletBinding()]
     [OutputType([String])]
@@ -81,13 +79,8 @@ function GetVersionsTestedHtml {
     [OutputType([String])]
     param()
 
-    if ($script:versionsTestedHtml.Length -eq 0) {
-        Write-Host "Caching list of tested versions..."
-        [SemanticVersion[]] $versionsTested = GetPowerShellExesToTest | ForEach-Object { GetExeVersion $_ } | Sort-Object
-        $script:versionsTestedHtml = ($versionsTested | ForEach-Object { "<span class=`"tested-version`">$_</span>" }) -join ", "
-    }
-
-    return $script:versionsTestedHtml
+    [SemanticVersion[]] $versionsTested = GetPowerShellExesToTest | ForEach-Object { $_.Item2 } | Sort-Object
+    return ($versionsTested | ForEach-Object { "<span class=`"tested-version`">$_</span>" }) -join ", "
 }
 
 function BuildSidebarHtml {

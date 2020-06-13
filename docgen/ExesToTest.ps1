@@ -3,20 +3,40 @@
     "powershell -Version 5.1"
 )
 
+[Tuple[String, SemanticVersion][]] $script:allExeTuples = @()
+
 function GetPowerShellExesToTest {
     [CmdletBinding()]
-    [OutputType([String[]])]
-    param()
+    [OutputType([Tuple[String, SemanticVersion][]])]
+    param(
+        [SemanticVersion] $MinVersion
+    )
 
-    [String] $packageDir = "$PSScriptRoot\..\pwsh-packages"
-    [DirectoryInfo[]] $packages = Get-ChildItem $packageDir
-    [String[]] $packageExes = $packages | ForEach-Object { "$($_.FullName)\pwsh.exe" }
+    if ($script:allExeTuples.Length -eq 0) {
+        Write-Host "Caching list of exes..."
 
-    if ($script:options.TestOnlyMajorVersions) {
-        return $windowsPowershellExes + ($packageExes | Where-Object { $_ -match "v[0-9]+\.0\.0" })
-    } else {
-        return $windowsPowershellExes + $packageExes
+        [String] $packageDir = "$PSScriptRoot\..\pwsh-packages"
+        [DirectoryInfo[]] $packages = Get-ChildItem $packageDir
+        [String[]] $packageExes = $packages | ForEach-Object { "$($_.FullName)\pwsh.exe" }
+
+        [String[]] $allExes = $windowsPowershellExes + $packageExes
+
+        $script:allExeTuples = $allExes |`
+            ForEach-Object { [Tuple]::Create($_, (GetExeVersion $_)) }
     }
+
+    return $script:allExeTuples |`
+        Where-Object {
+            [Tuple[String, SemanticVersion]] $tuple = $_
+            if ($script:options.TestOnlyMajorVersions) {
+                return ($tuple.Item2.Major -eq 2) -or
+                    ($tuple.Item2.Major -eq 5) -or
+                    (($tuple.Item2.Minor -eq 0) -and ($tuple.Item2.Patch -eq 0))
+            } else {
+                return $true
+            }
+        } |`
+        Where-Object { $_.Item2 -ge $MinVersion }
 }
 
 function RemoveBom {

@@ -3,18 +3,17 @@ function RunPowerShellExe {
     [OutputType([Tuple[SemanticVersion, String][]])]
     param(
         [Parameter(Mandatory)]
-        [String] $Exe,
+        [Tuple[String, SemanticVersion]] $Tuple,
         [Parameter(Mandatory)]
         [String] $CodeToRun
     )
 
-    Write-Host "Running $Exe"
+    Write-Host "Running $($Tuple.Item1)"
 
-    [String] $commandOutput = InvokeExe $Exe $CodeToRun
+    [String] $commandOutput = InvokeExe $Tuple.Item1 $CodeToRun
     [String] $formattedCommandOutput = "<pre class=`"output-text`">" + $commandOutput + "</pre>"
 
-    [SemanticVersion] $version = GetExeVersion $Exe
-    return [Tuple]::Create($version, $formattedCommandOutput)
+    return [Tuple]::Create($Tuple.Item2, $formattedCommandOutput)
 }
 
 function OutputCode {
@@ -22,7 +21,8 @@ function OutputCode {
     [OutputType([String])]
     param(
         [Parameter(Mandatory)]
-        [ScriptBlock] $Code
+        [ScriptBlock] $Code,
+        [String] $MinVersion = "0"
     )
 
     [String] $codeAsString = $Code.ToString()
@@ -31,14 +31,14 @@ function OutputCode {
 
     [String] $outputTableHtml = "<table class=`"output-table`"><caption>Output by version</caption><thead><tr>"
 
-    [String[]] $exesToTest = GetPowerShellExesToTest
+    [Tuple[String, SemanticVersion][]] $exesToTest = GetPowerShellExesToTest ([SemanticVersion]::new($MinVersion))
 
     [Tuple[SemanticVersion, String][]] $powershellResults = $exesToTest | ForEach-Object -ThrottleLimit 8 -Parallel {
-        [String] $exe = $_
+        [Tuple[String, System.Management.Automation.SemanticVersion]] $tuple = $_
 
         $docgen = Import-Module "$using:PSScriptRoot\..\docgen" -Force -PassThru
         # Run in the context of the docgen module
-        return & $docgen { RunPowerShellExe $exe $using:codeAsString }
+        return & $docgen { RunPowerShellExe $tuple $using:codeAsString }
     }
 
     [SemanticVersion[]] $allVersions = $powershellResults | ForEach-Object { $_.Item1 }
