@@ -3,7 +3,7 @@ function GetTitle {
     [OutputType([String])]
     param()
 
-    return 'Variable $? in parentheses'
+    return 'Exit status variable $?'
 }
 
 function RunPage {

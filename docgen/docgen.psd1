@@ -7,17 +7,18 @@ Description = "Helpers for generating pwsh-live-doc HTML"
 PowerShellVersion = "7.0"
 
 NestedModules = @(
-    "util.ps1",
-    "OutputPage.ps1",
+    "Util.ps1",
+    "GenerateSite.ps1",
+    "PageHelpers.ps1",
+    "OutputHomePage.ps1",
+    "OutputExamplePage.ps1",
     "OutputText.ps1",
     "OutputCode.ps1",
     "GeneralizeVersions.ps1",
     "ExesToTest.ps1")
 
 FunctionsToExport = @(
-    "OutputPage",
+    "GenerateSite",
     "OutputText",
-    "OutputCode",
-    "GetPowerShellExesToTest",
-    "GetExeVersion")
+    "OutputCode")
 }
