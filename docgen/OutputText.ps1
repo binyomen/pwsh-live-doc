@@ -7,5 +7,6 @@ function OutputText {
     )
 
     [String] $formattedText = FormatPageText $Text
-    return (ConvertFrom-Markdown -InputObject $formattedText).Html
+    [String] $rawHtml = (ConvertFrom-Markdown -InputObject $formattedText).Html
+    return $rawHtml -replace "<p>", "<p class=`"content-text`">"
 }

@@ -1,0 +1,103 @@
+:root {
+    --table-border: 2px solid black;
+}
+
+body {
+    font-size: large;
+    max-width: 100%;
+
+    margin-left: 2em;
+    margin-right: 2em;
+}
+
+#grid-container {
+    display: grid;
+
+    grid-template-columns: fit-content(15rem) 1fr;
+    grid-template-rows: max-content max-content 1fr;
+    grid-template-areas:
+        "header header"
+        "versions-tested main"
+        "page-nav main";
+
+    column-gap: 3rem;
+}
+
+@media only screen and (width <= 40em) {
+    #grid-container {
+        grid-template-columns: 100%;
+        grid-template-rows: auto;
+        grid-template-areas:
+            "header"
+            "main"
+            "versions-tested"
+            "page-nav";
+    }
+}
+
+header {
+    grid-area: header;
+    justify-self: center;
+    text-align: center;
+}
+
+header > h1 > a {
+    color: black;
+    text-decoration: none;
+}
+
+#versions-tested {
+    grid-area: versions-tested;
+}
+
+.tested-version {
+    margin: 4px;
+}
+
+main {
+    grid-area: main;
+    justify-self: start;
+    max-width: 100%;
+}
+
+.content-text {
+    max-width: 40em;
+}
+
+.output-table {
+    table-layout: fixed;
+    border-collapse: collapse;
+    border: var(--table-border);
+
+    width: 100%;
+}
+
+.output-table th, .output-table td {
+    padding: 10px;
+    border: var(--table-border);
+}
+
+.output-text, .code-view {
+    overflow: auto;
+}
+
+#page-nav {
+    grid-area: page-nav;
+}
+
+#page-nav > ol {
+    list-style: none;
+    padding-left: 0;
+}
+
+#page-nav ol > li > details > ol {
+    list-style: none;
+}
+
+#page-nav ol > li > details > ol > li {
+    padding-top: 0.5em;
+}
+
+#page-nav ol > li > details > ol > li a {
+    color: rgb(0, 0, 130);
+}
