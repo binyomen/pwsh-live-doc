@@ -11,6 +11,8 @@ function RunPage {
     [OutputType([String[]])]
     param()
 
+    OutputHeading 1 'Catching inside functions'
+
     OutputText @'
     When `$ErrorActionPreference` is `Stop`, `$PSCmdlet.WriteError` exits the
     current advanced function and throws. However, the exception it throws is
@@ -93,6 +95,8 @@ function RunPage {
             Write-Output "caught outside the function: $_"
         }
     }
+
+    OutputHeading 1 'Setting $?'
 
     OutputText @'
     The `WriteError` function differs from `Write-Error` in another way as
