@@ -8,7 +8,9 @@ param(
     },
 
     [Parameter(Mandatory, ParameterSetName="PageName")]
-    [String] $PageName
+    [String] $PageName,
+
+    [Switch] $TestOnlyMajorVersions
 )
 
 Push-Location $PSScriptRoot
@@ -20,19 +22,26 @@ try {
         )
     }
 
+    [PSCustomObject] $options = [PSCustomObject] @{
+        TestOnlyMajorVersions = $TestOnlyMajorVersions.ToBool()
+    }
+
     # Building needs to run in its own powershell session because otherwise
     # classes in modules like docgen get cached and can't be changed during
     # development. Import-Module -Force doesn't work with classes :(
     pwsh -Command {
-        param([String] $PageFilter)
+        param(
+            [String] $PageFilter,
+            [String] $OptionsString
+        )
 
         Set-StrictMode -Version Latest
         $script:ErrorActionPreference = "Stop"
 
         Import-Module .\docgen -Force
 
-        GenerateSite -PageFilter ([ScriptBlock]::Create($PageFilter))
-    } -Args $PageFilter
+        GenerateSite -PageFilter ([ScriptBlock]::Create($PageFilter)) -Options (ConvertFrom-Json $OptionsString)
+    } -Args $PageFilter, (ConvertTo-Json $options)
 } finally {
     Pop-Location
 }
