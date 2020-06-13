@@ -126,6 +126,14 @@ function.
 Helper functions are available automatically in each page module's RunPage
 function.
 
+#### OutputHeading
+
+This function takes a heading level (starting at 1) and content for the
+heading, and outputs a heading element.
+
+Because there are already heading levels 1 and 2 on the page, passing in `1`
+will produce an `h3`.
+
 #### OutputText
 
 This function takes a string of markdown code. This markdown is translated into
