@@ -16,6 +16,9 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
+    - name: Print out the environment
+      run: . .\printEnvironment.ps1
+
     - name: Download PowerShell packages to test against
       run: .\downloadPwshPackages.ps1
 
