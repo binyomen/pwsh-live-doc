@@ -12,7 +12,7 @@ function GetPowerShellExesToTest {
         [SemanticVersion] $MinVersion
     )
 
-    if ($script:allExeTuples.Length -eq 0) {
+    if ($script:allExeTuples.Count -eq 0) {
         Write-Host "Caching list of exes..."
 
         [String] $packageDir = "$PSScriptRoot\..\pwsh-packages"
@@ -46,7 +46,7 @@ function RemoveBom {
         [String] $InputString
     )
 
-    [String] $bomString = [System.Text.Encoding]::UTF8.GetString(@(239, 187, 191))
+    [String] $bomString = [Encoding]::UTF8.GetString(@(239, 187, 191))
 
     # Remove the BOM from the beginning of the string.
     return $InputString -replace "^$bomString", ""
@@ -59,19 +59,23 @@ function GetExeVersion {
         [String] $Exe
     )
 
-    [String] $rawVersionString = Invoke-Expression "$Exe -NoProfile -c `"```$PSVersionTable.PSVersion.ToString()`""
-
-    # Sometimes with PowerShell v2 there's a BOM at the beginning of the output string.
-    [String] $versionString = RemoveBom $rawVersionString
-
-    if ($Exe -in $windowsPowershellExes) {
-        [Version] $legacyVersion = [Version]::new($versionString)
-        [SemanticVersion] $version = [SemanticVersion]::new(`
-            $legacyVersion.Major,`
-            $legacyVersion.Minor,`
-            $legacyVersion.Revision -ge 0 ? $legacyVersion.Revision : 0)
+    if ($Exe -match 'v([0-9]+\.[0-9]+\.[0-9]+)\\pwsh.exe$') {
+        [SemanticVersion] $version = [SemanticVersion]::new($matches[1])
     } else {
-        [SemanticVersion] $version = [SemanticVersion]::new($versionString)
+        [String] $rawVersionString = Invoke-Expression "$Exe -NoProfile -Command `"```$PSVersionTable.PSVersion.ToString()`""
+
+        # Sometimes with PowerShell v2 there's a BOM at the beginning of the output string.
+        [String] $versionString = RemoveBom $rawVersionString
+
+        if ($Exe -in $windowsPowershellExes) {
+            [Version] $legacyVersion = [Version]::new($versionString)
+            [SemanticVersion] $version = [SemanticVersion]::new(`
+                $legacyVersion.Major,`
+                $legacyVersion.Minor,`
+                $legacyVersion.Revision -ge 0 ? $legacyVersion.Revision : 0)
+        } else {
+            [SemanticVersion] $version = [SemanticVersion]::new($versionString)
+        }
     }
 
     return $version
