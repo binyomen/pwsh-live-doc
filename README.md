@@ -85,12 +85,16 @@ For example, if you only wanted to build the page at
 }
 ```
 
-The -PageName parameter to `buildSite.ps1` is shorthand for:
+The -PageNames parameter to `buildSite.ps1` is shorthand for:
 
 ```powershell
 .\buildSite.ps1 -PageFilter {
     param([Page[]] $AllPages, [Page] $PageToCheck)
-    return $PageToCheck.GetTitle() -like "the page name"
+    [String] $title = $PageToCheck.GetTitle()
+    <page name list> | ForEach-Object `
+        { [Boolean] $b = $false } `
+        { $b = $b -or ($title -like $_) } `
+        { $b }
 }
 ```
 
@@ -151,6 +155,10 @@ separate PowerShell processes with `<exename> -c $scriptBlockString`.
 
 The functions from the util module (e.g. `NewErrorRecord`) will be available
 within your script block.
+
+You can pass the -MinVersion parameter to specify the minimum version the code
+should run on. This is useful if the example is for a feature that was only
+introduced in a certain version.
 
 After running the script block against multiple versions of PowerShell,
 `OutputCode` generates HTML to display the code block as well as a table of
