@@ -83,6 +83,28 @@ function GetExeVersion {
     return $version
 }
 
+function RunAndGatherOutput {
+    [CmdletBinding()]
+    [OutputType([String])]
+    param(
+        [Parameter(Mandatory)]
+        [DirectoryInfo] $WorkingDir,
+        [Parameter(Mandatory)]
+        [String] $CommandLine
+    )
+
+    Push-Location $WorkingDir
+    try {
+        [String[]] $result = Invoke-Expression $CommandLine
+
+        # Sometimes with PowerShell v2 there's a BOM at the beginning of the
+        # output string.
+        return RemoveBom ($result -join "`n")
+    } finally {
+        Pop-Location
+    }
+}
+
 function InvokeExe {
     [CmdletBinding()]
     [OutputType([String])]
@@ -93,16 +115,14 @@ function InvokeExe {
         [String] $Expr
     )
 
-    [FileInfo] $tempScript = New-Item "Temp:\$(New-Guid).ps1"
+    [FileInfo] $tempScript = New-Item "Temp:\pwsh-live-doc_$(New-Guid)\__script.ps1" -Force
     try {
         [String] $header = "Import-Module -Force $PSScriptRoot\..\util"
         Set-Content $tempScript.FullName "$header; $Expr"
-        [String[]] $result = Invoke-Expression "$Exe -NoProfile -File $tempScript"
+        [String[]] $output = RunAndGatherOutput $tempScript.Directory "$Exe -NoProfile -NonInteractive -File $tempScript"
 
-        # Sometimes with PowerShell v2 there's a BOM at the beginning of the
-        # output string.
-        return RemoveBom ($result -join "`n")
+        return $output
     } finally {
-        Remove-Item -Force $tempScript
+        Remove-Item $tempScript.Directory -Recurse -Force
     }
 }
