@@ -5,6 +5,7 @@ function NewErrorRecord {
     [CmdletBinding()]
     [OutputType([System.Management.Automation.ErrorRecord])]
     param(
+        [Parameter(Mandatory=$true)]
         [String] $Text
     )
 

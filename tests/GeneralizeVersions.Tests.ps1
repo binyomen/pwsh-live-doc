@@ -6,6 +6,7 @@ function global:V {
     [CmdletBinding()]
     [OutputType([SemanticVersion[]])]
     param(
+        [Parameter(Mandatory)]
         [String[]] $VersionStrings
     )
 

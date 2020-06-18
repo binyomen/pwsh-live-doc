@@ -31,7 +31,9 @@ try {
     # development. Import-Module -Force doesn't work with classes :(
     pwsh -Command {
         param(
+            [Parameter(Mandatory)]
             [String] $PageFilter,
+            [Parameter(Mandatory)]
             [String] $OptionsString
         )
 

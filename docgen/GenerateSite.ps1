@@ -23,6 +23,7 @@ function GenerateSite {
     param(
         [Parameter(Mandatory)]
         [ScriptBlock] $PageFilter,
+        [Parameter(Mandatory)]
         [PSCustomObject] $Options
     )
 
