@@ -1,24 +1,31 @@
 [CmdletBinding()]
 [OutputType([Void])]
 param(
-    [Parameter(ParameterSetName="Filter")]
+    [Parameter(ParameterSetName='Filter')]
     [ScriptBlock] $PageFilter = {
         param([Page[]] $AllPages, [Page] $PageToCheck)
         return $true
     },
 
-    [Parameter(Mandatory, ParameterSetName="PageName")]
-    [String] $PageName,
+    [Parameter(Mandatory, ParameterSetName='PageNames')]
+    [String[]] $PageNames,
 
     [Switch] $TestOnlyMajorVersions
 )
 
 Push-Location $PSScriptRoot
 try {
-    if ($PSCmdlet.ParameterSetName -eq "PageName") {
+    if ($PSCmdlet.ParameterSetName -eq 'PageNames') {
+        [String] $pageNamesString = "@($(($PageNames | `
+            ForEach-Object { $_ -replace "'", "''" } | `
+            ForEach-Object { "'$_'" }) -join ', '))"
         $PageFilter = [ScriptBlock]::Create(
             "param([Page[]] `$AllPages, [Page] `$PageToCheck)
-            return `$PageToCheck.GetTitle() -like `"$PageName`""
+            [String] `$title = `$PageToCheck.GetTitle()
+            $pageNamesString | ForEach-Object ``
+                { [Boolean] `$b = `$false } ``
+                { `$b = `$b -or (`$title -like `$_) } ``
+                { `$b }"
         )
     }
 
