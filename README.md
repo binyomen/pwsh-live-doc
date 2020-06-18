@@ -154,7 +154,9 @@ state outside of it. It will be converted into a string and then run in
 separate PowerShell processes with `<exename> -c $scriptBlockString`.
 
 The functions from the util module (e.g. `NewErrorRecord`) will be available
-within your script block.
+within your script block. You will also be able to write to files in your
+current directory, since that directory will get deleted after the example
+finishes.
 
 You can pass the -MinVersion parameter to specify the minimum version the code
 should run on. This is useful if the example is for a feature that was only
