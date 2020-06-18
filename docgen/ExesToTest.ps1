@@ -9,7 +9,7 @@ function GetPowerShellExesToTest {
     [CmdletBinding()]
     [OutputType([Tuple[String, SemanticVersion][]])]
     param(
-        [SemanticVersion] $MinVersion
+        [SemanticVersion] $MinVersion = [SemanticVersion]::new(0)
     )
 
     if ($script:allExeTuples.Count -eq 0) {
@@ -43,6 +43,7 @@ function RemoveBom {
     [CmdletBinding()]
     [OutputType([String])]
     param(
+        [Parameter(Mandatory)]
         [String] $InputString
     )
 
@@ -56,6 +57,7 @@ function GetExeVersion {
     [CmdletBinding()]
     [OutputType([SemanticVersion])]
     param(
+        [Parameter(Mandatory)]
         [String] $Exe
     )
 
@@ -85,7 +87,9 @@ function InvokeExe {
     [CmdletBinding()]
     [OutputType([String])]
     param(
+        [Parameter(Mandatory)]
         [String] $Exe,
+        [Parameter(Mandatory)]
         [String] $Expr
     )
 

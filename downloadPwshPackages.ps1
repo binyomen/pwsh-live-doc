@@ -22,6 +22,7 @@ function GetVersionFromRelease {
     [CmdletBinding()]
     [OutputType([SemanticVersion])]
     param(
+        [Parameter(Mandatory)]
         [PSCustomObject] $Release
     )
 
@@ -34,6 +35,7 @@ function GetNextUrl {
     [CmdletBinding()]
     [OutputType([String])]
     param(
+        [Parameter(Mandatory)]
         [String] $Link
     )
 
@@ -99,7 +101,9 @@ function ExtractPackage {
     [CmdletBinding()]
     [OutputType([Void])]
     param(
+        [Parameter(Mandatory)]
         [String] $ZipPath,
+        [Parameter(Mandatory)]
         [String] $ExtractPath
     )
 
@@ -115,6 +119,7 @@ function DownloadUrls {
     [CmdletBinding()]
     [OutputType([Void])]
     param(
+        [Parameter(Mandatory)]
         [Tuple[String, String, Int64][]] $UrlPairs
     )
 
