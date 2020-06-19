@@ -14,7 +14,7 @@ NestedModules = @(
     "OutputExamplePage.ps1",
     "OutputText.ps1",
     "OutputCode.ps1",
-    "OutputHeading.ps1",
+    "OutputSection.ps1",
     "GeneralizeVersions.ps1",
     "ExesToTest.ps1")
 
@@ -22,5 +22,5 @@ FunctionsToExport = @(
     "GenerateSite",
     "OutputText",
     "OutputCode",
-    "OutputHeading")
+    "OutputSection")
 }

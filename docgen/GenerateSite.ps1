@@ -28,28 +28,32 @@ function GenerateSite {
     )
 
     $script:options = $Options
-    try {
-        [String] $projectRoot = "$PSScriptRoot\.."
 
-        [String] $webrootPath = "$projectRoot\webroot"
-        Remove-Item $webrootPath -Recurse -Force -ErrorAction "SilentlyContinue"
-        mkdir $webrootPath > $null
+    [String] $projectRoot = "$PSScriptRoot\.."
 
-        [Page[]] $pages = Get-ChildItem "$projectRoot\example-pages\*.psm1" -Exclude "category.psm1" -Recurse |`
-            ForEach-Object { [Page]::new($_) }
+    [String] $webrootPath = "$projectRoot\webroot"
+    Remove-Item $webrootPath -Recurse -Force -ErrorAction "SilentlyContinue"
+    mkdir $webrootPath > $null
 
-        # Write out the example page files.
-        $pages |`
-            Where-Object { Invoke-Command $PageFilter -Args $pages, $_ } |`
-            ForEach-Object { WriteHtmlFile $_.GetLinkPath() $_.GetHtml($pages) }
+    [Page[]] $pages = Get-ChildItem "$projectRoot\example-pages\*.psm1" -Exclude "category.psm1" -Recurse |`
+        ForEach-Object { [Page]::new($_) }
+    [Page[]] $filteredPages = $pages | Where-Object { Invoke-Command $PageFilter -Args $pages, $_ }
 
-        # Write out the home page file.
-        [String] $homePageHtml = OutputHomePage $pages
-        WriteHtmlFile "index.html" $homePageHtml
+    # Build the page outlines.
+    [Hashtable] $script:outline = @{}
+    [Boolean] $script:buildingOutline = $true
+    $filteredPages | `
+        ForEach-Object { $_.AddToOutline() }
+    $script:buildingOutline = $false
 
-        # Copy static assets to the webroot.
-        Copy-Item "$projectRoot\static\*" $webrootPath -Recurse
-    } finally {
-        $script:options = $null
-    }
+    # Write out the example page files.
+    $filteredPages | `
+        ForEach-Object { WriteHtmlFile $_.GetLinkPath() $_.GetHtml($filteredPages) }
+
+    # Write out the home page file.
+    [String] $homePageHtml = OutputHomePage $filteredPages
+    WriteHtmlFile 'index.html' $homePageHtml
+
+    # Copy static assets to the webroot.
+    Copy-Item "$projectRoot\static\*" $webrootPath -Recurse
 }

@@ -25,6 +25,10 @@ function OutputCode {
         [String] $MinVersion = "0"
     )
 
+    if ($script:buildingOutline) {
+        return
+    }
+
     [String] $codeAsString = $Code.ToString()
     [String] $formattedCode = FormatPageText $codeAsString
     [String] $codeHtml = "<pre class=`"code-view`"><code class=`"powershell`">" + $formattedCode + "</code></pre>"
