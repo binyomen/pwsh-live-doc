@@ -22,58 +22,58 @@ function RunPage {
     exceptions.
 '@
 
-    OutputHeading 1 'Stdout'
-
-    OutputText @'
-    Stdout is never output to the console, no matter the return type of the
-    method.
+    OutputSection 'Stdout' {
+        OutputText @'
+        Stdout is never output to the console, no matter the return type of the
+        method.
 '@
 
-    OutputCode -MinVersion 5 {
-        class C {
-            [String] Func1() {
-                Write-Output 'Func1: writing string to stdout'
-                return 'Func1: returning a string'
+        OutputCode -MinVersion 5 {
+            class C {
+                [String] Func1() {
+                    Write-Output 'Func1: writing string to stdout'
+                    return 'Func1: returning a string'
+                }
+
+                [String] Func2() {
+                    cmd /c 'echo Func2: writing string to stdout'
+                    return 'Func2: returning a string'
+                }
+
+                [UInt32] Func3() {
+                    Write-Output 'Func3: writing string to stdout'
+                    return 3
+                }
+
+                [UInt32] Func4() {
+                    cmd /c 'echo Func4: writing string to stdout'
+                    return 4
+                }
+
+                [Void] Func5() {
+                    Write-Output 'Func5: writing string to stdout'
+                }
+
+                [Void] Func6() {
+                    cmd /c 'echo Func6: writing string to stdout'
+                }
             }
 
-            [String] Func2() {
-                cmd /c 'echo Func2: writing string to stdout'
-                return 'Func2: returning a string'
-            }
-
-            [UInt32] Func3() {
-                Write-Output 'Func3: writing string to stdout'
-                return 3
-            }
-
-            [UInt32] Func4() {
-                cmd /c 'echo Func4: writing string to stdout'
-                return 4
-            }
-
-            [Void] Func5() {
-                Write-Output 'Func5: writing string to stdout'
-            }
-
-            [Void] Func6() {
-                cmd /c 'echo Func6: writing string to stdout'
-            }
+            $c = [C]::new()
+            $c.Func1()
+            $c.Func2()
+            $c.Func3()
+            $c.Func4()
+            $c.Func5()
+            $c.Func6()
         }
-
-        $c = [C]::new()
-        $c.Func1()
-        $c.Func2()
-        $c.Func3()
-        $c.Func4()
-        $c.Func5()
-        $c.Func6()
     }
 
-    OutputHeading 1 'Stderr'
+    OutputSection 'Stderr' {
+        OutputText 'Coming soon...'
+    }
 
-    OutputText 'Coming soon...'
-
-    OutputHeading 1 'Stdin'
-
-    OutputText 'TODO'
+    OutputSection 'Stdin' {
+        OutputText 'TODO'
+    }
 }

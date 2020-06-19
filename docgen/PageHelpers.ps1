@@ -67,7 +67,16 @@ class Page {
         return "/$categorySlug/$pageSlug.html"
     }
 
+    [Void] AddToOutline() {
+        $script:currentOutline = @()
+
+        $this.Module.RunPage() > $null
+
+        $script:outline[$this.GetTitle()] = $script:currentOutline
+    }
+
     [String] GetHtml([Page[]] $AllPages) {
+        [Byte] $script:sectionLevel = 0
         return OutputExamplePage $this $this.ModuleFileName $this.Module $AllPages
     }
 }
@@ -151,7 +160,7 @@ function BuildPageHtml {
     <!DOCTYPE html>
     <html lang="en-US">
         <head>
-            <meta charset="UTF-8" />
+            <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1">
             <title>$Title</title>
             <link rel="stylesheet" type="text/css" href="/css/style.css">
@@ -168,7 +177,9 @@ function BuildPageHtml {
                     <h1><a href="/">PowerShell live documentation</a></h1>
                 </header>
                 <main>
-                    $ContentHtml
+                    <article>
+                        $ContentHtml
+                    </article>
                 </main>
                 <aside id="versions-tested" aria-labelledby="versions-tested-heading">
                     <h2 id="versions-tested-heading">Versions tested</h2>

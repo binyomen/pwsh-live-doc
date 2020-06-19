@@ -11,7 +11,6 @@ function MakeHeading {
     return "<$TagName>$Content</$TagName>"
 }
 
-
 function OutputHeading {
     [CmdletBinding()]
     [OutputType([String])]
@@ -29,4 +28,32 @@ function OutputHeading {
         4 { return MakeHeading "h6" $Text }
         default { throw "Invalid heading level" }
     }
+}
+
+function OutputSection {
+    [CmdletBinding()]
+    [OutputType([String])]
+    param(
+        [Parameter(Mandatory)]
+        [String] $HeadingText,
+        [Parameter(Mandatory)]
+        [ScriptBlock] $Code
+    )
+
+    if ($script:buildingOutline) {
+        $script:currentOutline += $HeadingText
+        & $Code
+        return
+    }
+
+    $script:sectionLevel += 1;
+    $html = '<section>'
+
+    $html += OutputHeading $script:sectionLevel $HeadingText
+    $html += (& $Code) -join "`n"
+
+    $html += '</section>'
+    $script:sectionLevel -= 1;
+
+    return $html
 }

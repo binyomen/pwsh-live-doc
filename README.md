@@ -134,13 +134,12 @@ function.
 Helper functions are available automatically in each page module's RunPage
 function.
 
-#### OutputHeading
+#### OutputSection
 
-This function takes a heading level (starting at 1) and content for the
-heading, and outputs a heading element.
-
-Because there are already heading levels 1 and 2 on the page, passing in `1`
-will produce an `h3`.
+This function takes the heading text and a script block of other commands that
+should output inside the section. It outputs a `<section>` element with an
+associated heading. Sections can be nested, and the heading level is
+automatically calculated.
 
 #### OutputText
 
