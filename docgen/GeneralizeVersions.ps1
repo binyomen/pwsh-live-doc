@@ -1,6 +1,3 @@
-# Needed for types in classes below.
-using namespace System.Management.Automation
-
 [Object] $script:RootValue = ""
 
 function ValuesEqual {

@@ -1,6 +1,3 @@
-# Needed for types in classes below.
-using namespace System.IO
-
 function TitleToUrlPathSegment {
     [CmdletBinding()]
     [OutputType([String])]

@@ -1,13 +1,13 @@
-[String[]] $script:windowsPowershellExes = @(
-    "powershell -Version 2",
-    "powershell -Version 5.1"
+[String[][]] $script:windowsPowershellExes = @(
+    @('powershell', '-Version', '2'),
+    @('powershell', '-Version', '5.1')
 )
 
-[Tuple[String, SemanticVersion][]] $script:allExeTuples = @()
+[Tuple[[String[]], System.Management.Automation.SemanticVersion][]] $script:allExeTuples = @()
 
 function GetPowerShellExesToTest {
     [CmdletBinding()]
-    [OutputType([Tuple[String, SemanticVersion][]])]
+    [OutputType([Tuple[[String[]], SemanticVersion][]])]
     param(
         [SemanticVersion] $MinVersion = [SemanticVersion]::new(0)
     )
@@ -17,9 +17,9 @@ function GetPowerShellExesToTest {
 
         [String] $packageDir = "$PSScriptRoot\..\pwsh-packages"
         [DirectoryInfo[]] $packages = Get-ChildItem $packageDir
-        [String[]] $packageExes = $packages | ForEach-Object { "$($_.FullName)\pwsh.exe" }
+        [String[]] $packageExes = $packages | ForEach-Object { ,@("$($_.FullName)\pwsh.exe") }
 
-        [String[]] $allExes = $windowsPowershellExes + $packageExes
+        [String[][]] $allExes = $windowsPowershellExes + $packageExes
 
         $script:allExeTuples = $allExes |`
             ForEach-Object { [Tuple]::Create($_, (GetExeVersion $_)) }
@@ -27,7 +27,7 @@ function GetPowerShellExesToTest {
 
     return $script:allExeTuples |`
         Where-Object {
-            [Tuple[String, SemanticVersion]] $tuple = $_
+            [Tuple[[String[]], SemanticVersion]] $tuple = $_
             if ($script:options.TestOnlyMajorVersions) {
                 return ($tuple.Item2.Major -eq 2) -or
                     ($tuple.Item2.Major -eq 5) -or
@@ -44,6 +44,7 @@ function RemoveBom {
     [OutputType([String])]
     param(
         [Parameter(Mandatory)]
+        [AllowEmptyString()]
         [String] $InputString
     )
 
@@ -58,10 +59,10 @@ function GetExeVersion {
     [OutputType([SemanticVersion])]
     param(
         [Parameter(Mandatory)]
-        [String] $Exe
+        [String[]] $Exe
     )
 
-    if ($Exe -match 'v([0-9]+\.[0-9]+\.[0-9]+)\\pwsh.exe$') {
+    if ($Exe[0] -match 'v([0-9]+\.[0-9]+\.[0-9]+)\\pwsh.exe$') {
         [SemanticVersion] $version = [SemanticVersion]::new($matches[1])
     } else {
         [String] $rawVersionString = Invoke-Expression "$Exe -NoProfile -Command `"```$PSVersionTable.PSVersion.ToString()`""
@@ -69,7 +70,7 @@ function GetExeVersion {
         # Sometimes with PowerShell v2 there's a BOM at the beginning of the output string.
         [String] $versionString = RemoveBom $rawVersionString
 
-        if ($Exe -in $windowsPowershellExes) {
+        if ($Exe[0] -eq 'powershell') {
             [Version] $legacyVersion = [Version]::new($versionString)
             [SemanticVersion] $version = [SemanticVersion]::new(`
                 $legacyVersion.Major,`
@@ -83,46 +84,90 @@ function GetExeVersion {
     return $version
 }
 
+function NewExampleOutput {
+    [CmdletBinding()]
+    [OutputType([PSCustomObject])]
+    param(
+        [Parameter(Mandatory)]
+        [AllowEmptyString()]
+        [String] $Stdout,
+        [Parameter(Mandatory)]
+        [AllowEmptyString()]
+        [String] $Stderr
+    )
+
+    return [PSCustomObject]@{
+        PSTypeName = 'ExampleOutput'
+        Stdout = $Stdout
+        Stderr = $Stderr
+    }
+}
+
 function RunAndGatherOutput {
     [CmdletBinding()]
-    [OutputType([String])]
+    [OutputType([PSCustomObject])]
     param(
         [Parameter(Mandatory)]
         [DirectoryInfo] $WorkingDir,
         [Parameter(Mandatory)]
-        [String] $CommandLine
+        [String[]] $Exe,
+        [Parameter(Mandatory)]
+        [String] $Arguments
     )
 
-    Push-Location $WorkingDir
-    try {
-        [String[]] $result = Invoke-Expression $CommandLine
+    [FileInfo] $stdoutFile = New-Item "$WorkingDir\__stdout"
+    [FileInfo] $stderrFile = New-Item "$WorkingDir\__stderr"
 
-        # Sometimes with PowerShell v2 there's a BOM at the beginning of the
-        # output string.
-        return RemoveBom ($result -join "`n")
-    } finally {
-        Pop-Location
-    }
+    [String] $exeFile = $Exe[0]
+    [String[]] $exeArgs = $Exe.Count -gt 1 ? $Exe[1..($Exe.Count - 1)] : @()
+
+    Start-Process $exeFile -Args ($exeArgs + $Arguments) `
+        -RedirectStandardOutput $stdoutFile -RedirectStandardError $stderrFile `
+        -WorkingDirectory $WorkingDir -Wait -NoNewWindow
+
+    [String] $stdout = Get-Content -Raw $stdoutFile
+    [String] $stderr = Get-Content -Raw $stderrFile
+
+    # Sometimes with PowerShell v2 there's a BOM at the beginning of the output string.
+    [PSCustomObject] $output = NewExampleOutput (RemoveBom $stdout) (RemoveBom $stderr)
+    return $output
 }
 
 function InvokeExe {
     [CmdletBinding()]
-    [OutputType([String])]
+    [OutputType([PSCustomObject])]
     param(
         [Parameter(Mandatory)]
-        [String] $Exe,
+        [String[]] $Exe,
         [Parameter(Mandatory)]
-        [String] $Expr
+        [String] $Code
     )
 
     [FileInfo] $tempScript = New-Item "Temp:\pwsh-live-doc_$(New-Guid)\__script.ps1" -Force
     try {
         [String] $header = "Import-Module -Force $PSScriptRoot\..\util"
-        Set-Content $tempScript.FullName "$header; $Expr"
-        [String[]] $output = RunAndGatherOutput $tempScript.Directory "$Exe -NoProfile -NonInteractive -File $tempScript"
+        Set-Content $tempScript.FullName "$header; $Code"
+        [PSCustomObject] $output = RunAndGatherOutput $tempScript.Directory $Exe "-NoProfile -NonInteractive -File $tempScript"
 
         return $output
     } finally {
-        Remove-Item $tempScript.Directory -Recurse -Force
+        # The stdio files may still be open by the process, even though
+        # PowerShell says it's exited. Keep trying until we can delete them.
+        [UInt32] $tries = 0
+        while ($true) {
+            try {
+                Remove-Item $tempScript.Directory -Recurse -Force
+                break
+            } catch {
+                $tries += 1
+                # The file should be deletable eventually, but PowerShell can
+                # sometimes take a while to run down, so give lots of wiggle room.
+                if ($tries -gt 1000) {
+                    throw $_
+                }
+
+                Start-Sleep -Milliseconds 30
+            }
+        }
     }
 }

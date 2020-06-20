@@ -1,19 +1,19 @@
 :root {
-    --table-border: 2px solid black;
+    --output-view-border: 2px solid black;
 }
 
 body {
     font-size: large;
     max-width: 100%;
 
-    margin-left: 2rem;
-    margin-right: 2rem;
+    margin-left: 1rem;
+    margin-right: 1rem;
 }
 
 #grid-container {
     display: grid;
 
-    grid-template-columns: fit-content(15em) 1fr;
+    grid-template-columns: fit-content(15em) minmax(0, 1fr);
     grid-template-rows: max-content max-content 1fr;
     grid-template-areas:
         "header header"
@@ -25,7 +25,7 @@ body {
 
 /* Try to check if the screen width is less than the (very approximate) sum of
  * all element max widths and paddings */
-@media only screen and (max-width: calc(2em + 15em + 3em + 40em + 2em)) {
+@media only screen and (max-width: calc(1em + 15em + 3em + 40em + 1em)) {
     #grid-container {
         grid-template-columns: 100%;
         grid-template-rows: auto;
@@ -66,21 +66,73 @@ main {
     max-width: 40em;
 }
 
-.output-table {
-    table-layout: fixed;
-    border-collapse: collapse;
-    border: var(--table-border);
-
-    width: 100%;
-}
-
-.output-table th, .output-table td {
-    padding: 10px;
-    border: var(--table-border);
-}
-
-.output-text, .code-view {
+.code-view {
     overflow: auto;
+}
+
+.output-view > .output-view-flex {
+    display: flex;
+    flex-wrap: wrap;
+
+    max-width: 100%;
+}
+
+.output-view > .output-view-flex > div {
+    flex-grow: 1;
+
+    box-sizing: border-box;
+    border: var(--output-view-border);
+    margin-right: -1.5px;
+    margin-bottom: -1.5px;
+
+    --output-view-padding: 0.7em;
+    padding-left: var(--output-view-padding);
+    padding-right: var(--output-view-padding);
+    padding-bottom: var(--output-view-padding);
+}
+
+.output-view-heading {
+    padding-top: 0.5em;
+    padding-bottom: 0.5em;
+}
+
+.output-view > .output-view-heading {
+    font-size: 1.5em;
+}
+
+.output-view > .output-view-flex > div > .output-view-heading {
+    width: 100%;
+    font-size: 1.3em;
+    border-bottom: var(--output-view-border);
+}
+
+.output-view > .output-view-flex > div > div > .output-view-heading {
+    font-size: 1.1em;
+}
+
+.output-text {
+    background: #f0f0f0;
+    padding: 0.5em;
+    margin: 0;
+
+    counter-reset: line-number;
+    white-space: pre-wrap;
+}
+
+.output-line {
+    display: inline-block;
+    text-indent: -3em;
+    padding-left: 3em;
+}
+
+.output-text > span::before, .output-text > details > span::before, .output-text > details > summary::before {
+    counter-increment: line-number;
+    content: counter(line-number);
+
+    /* display: inline-block; */
+    border-right: 1px solid black;
+    padding-right: 0.5em;
+    margin-right: 0.5em;
 }
 
 #page-nav {

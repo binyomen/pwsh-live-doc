@@ -32,6 +32,21 @@ function GetIndent {
     return $indent
 }
 
+function EscapeHtml {
+    [CmdletBinding()]
+    [OutputType([String])]
+    param(
+        [Parameter(Mandatory)]
+        [String] $Text
+    )
+
+    [String] $escaped = $Text
+    $escaped = $escaped -replace '&', '&amp;'
+    $escaped = $escaped -replace '<', '&lt;'
+    $escaped = $escaped -replace '>', '&gt;'
+    return $escaped
+}
+
 function FormatPageText {
     [CmdletBinding()]
     [OutputType([String])]
