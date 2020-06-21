@@ -3,13 +3,18 @@ function OutputExamplePage {
     [OutputType([String])]
     param(
         [Parameter(Mandatory)]
-        [Page] $Page,
+        [PSTypeName('Page')]
+        [PSCustomObject] $Page,
+
         [Parameter(Mandatory)]
         [String] $pageModuleFileName,
+
         [Parameter(Mandatory)]
         [PSCustomObject] $PageModule,
+
         [Parameter(Mandatory)]
-        [Page[]] $Pages
+        [PSTypeName('Page')]
+        [PSCustomObject[]] $Pages
     )
 
     [String] $title = $PageModule.GetTitle()

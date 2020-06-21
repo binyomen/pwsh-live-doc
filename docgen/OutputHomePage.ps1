@@ -3,7 +3,8 @@ function OutputHomePage {
     [OutputType([String])]
     param(
         [Parameter(Mandatory)]
-        [Page[]] $Pages
+        [PSTypeName('Page')]
+        [PSCustomObject[]] $Pages
     )
 
     [String] $mainPageContent = OutputText @'

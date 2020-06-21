@@ -1,3 +1,19 @@
+function AddScriptMethod {
+    [CmdletBinding()]
+    [OutputType([Void])]
+    param(
+        [Parameter(Mandatory)]
+        [String] $TypeName,
+        [Parameter(Mandatory)]
+        [String] $MethodName,
+        [Parameter(Mandatory)]
+        [ScriptBlock] $Definition
+    )
+
+    Update-TypeData -TypeName $TypeName -MemberName $MethodName `
+        -MemberType ScriptMethod -Value $Definition -Force
+}
+
 function GetIndent {
     [CmdletBinding()]
     [OutputType([Byte])]

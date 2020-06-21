@@ -71,16 +71,16 @@ This will generate the files for the site, using all the PowerShell versions in
 If you don't want to build the entire site during development, you can specify
 a script block to the `buildSite.ps1` -PageFilter parameter. The script block
 will be passed two arguments: a list of all example pages that can be built and
-the current page the filter is running on. Pages are instances of `Page` as
-defined in `PageHelpers.ps1`. If the script block returns true, the page will
-be generated.
+the current page the filter is running on. Pages are instances of
+`PSCustomObject` with type name "Page" as defined in `PageHelpers.ps1`. If the
+script block returns true, the page will be generated.
 
 For example, if you only wanted to build the page at
 "/errors/exit-status-variable-$-question-mark.html", you could do:
 
 ```powershell
 .\buildSite.ps1 -PageFilter {
-    param([Page[]] $AllPages, [Page] $PageToCheck)
+    param($AllPages, $PageToCheck)
     return $PageToCheck.GetLinkPath() -eq '/errors/exit-status-variable-$-question-mark.html'
 }
 ```
@@ -89,9 +89,18 @@ The -PageNames parameter to `buildSite.ps1` is shorthand for:
 
 ```powershell
 .\buildSite.ps1 -PageFilter {
-    param([Page[]] $AllPages, [Page] $PageToCheck)
+    param(
+        [Parameter(Mandatory)]
+        [PSTypeName('Page')]
+        [PSCustomObject[]] $AllPages,
+
+        [Parameter(Mandatory)]
+        [PSTypeName('Page')]
+        [PSCustomObject] $PageToCheck
+    )
+
     [String] $title = $PageToCheck.GetTitle()
-    <page name list> | ForEach-Object `
+    $PageNames | ForEach-Object `
         { [Boolean] $b = $false } `
         { $b = $b -or ($title -like $_) } `
         { $b }

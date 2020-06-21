@@ -3,7 +3,15 @@
 param(
     [Parameter(ParameterSetName='Filter')]
     [ScriptBlock] $PageFilter = {
-        param([Page[]] $AllPages, [Page] $PageToCheck)
+        param(
+            [Parameter(Mandatory)]
+            [PSTypeName('Page')]
+            [PSCustomObject[]] $AllPages,
+
+            [Parameter(Mandatory)]
+            [PSTypeName('Page')]
+            [PSCustomObject] $PageToCheck
+        )
         return $true
     },
 
@@ -13,44 +21,29 @@ param(
     [Switch] $TestOnlyMajorVersions
 )
 
-Push-Location $PSScriptRoot
-try {
-    if ($PSCmdlet.ParameterSetName -eq 'PageNames') {
-        [String] $pageNamesString = "@($(($PageNames | `
-            ForEach-Object { $_ -replace "'", "''" } | `
-            ForEach-Object { "'$_'" }) -join ', '))"
-        $PageFilter = [ScriptBlock]::Create(
-            "param([Page[]] `$AllPages, [Page] `$PageToCheck)
-            [String] `$title = `$PageToCheck.GetTitle()
-            $pageNamesString | ForEach-Object ``
-                { [Boolean] `$b = `$false } ``
-                { `$b = `$b -or (`$title -like `$_) } ``
-                { `$b }"
-        )
-    }
-
-    [PSCustomObject] $options = [PSCustomObject] @{
-        TestOnlyMajorVersions = $TestOnlyMajorVersions.ToBool()
-    }
-
-    # Building needs to run in its own powershell session because otherwise
-    # classes in modules like docgen get cached and can't be changed during
-    # development. Import-Module -Force doesn't work with classes :(
-    pwsh -Command {
+if ($PSCmdlet.ParameterSetName -eq 'PageNames') {
+    $PageFilter = {
         param(
             [Parameter(Mandatory)]
-            [String] $PageFilter,
+            [PSTypeName('Page')]
+            [PSCustomObject[]] $AllPages,
+
             [Parameter(Mandatory)]
-            [String] $OptionsString
+            [PSTypeName('Page')]
+            [PSCustomObject] $PageToCheck
         )
 
-        Set-StrictMode -Version Latest
-        $script:ErrorActionPreference = "Stop"
-
-        Import-Module .\docgen -Force
-
-        GenerateSite -PageFilter ([ScriptBlock]::Create($PageFilter)) -Options (ConvertFrom-Json $OptionsString)
-    } -Args $PageFilter, (ConvertTo-Json $options)
-} finally {
-    Pop-Location
+        [String] $title = $PageToCheck.GetTitle()
+        $PageNames | ForEach-Object `
+            { [Boolean] $b = $false } `
+            { $b = $b -or ($title -like $_) } `
+            { $b }
+    }
 }
+
+[PSCustomObject] $options = [PSCustomObject]@{
+    TestOnlyMajorVersions = $TestOnlyMajorVersions.ToBool()
+}
+
+Import-Module .\docgen -Force
+GenerateSite -PageFilter $PageFilter -Options $options

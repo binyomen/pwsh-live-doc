@@ -35,9 +35,9 @@ function GenerateSite {
     Remove-Item $webrootPath -Recurse -Force -ErrorAction "SilentlyContinue"
     mkdir $webrootPath > $null
 
-    [Page[]] $pages = Get-ChildItem "$projectRoot\example-pages\*.psm1" -Exclude "category.psm1" -Recurse |`
-        ForEach-Object { [Page]::new($_) }
-    [Page[]] $filteredPages = $pages | Where-Object { Invoke-Command $PageFilter -Args $pages, $_ }
+    [PSCustomObject[]] $pages = Get-ChildItem "$projectRoot\example-pages\*.psm1" -Exclude "category.psm1" -Recurse |`
+        ForEach-Object { NewPage $_ }
+    [PSCustomObject[]] $filteredPages = $pages | Where-Object { Invoke-Command $PageFilter -Args $pages, $_ }
 
     # Build the page outlines.
     [Hashtable] $script:outline = @{}
