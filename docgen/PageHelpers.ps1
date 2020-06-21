@@ -40,47 +40,81 @@ function TitleToUrlPathSegment {
     return $seg
 }
 
-class Page {
-    [String] hidden $ModuleFileName
-    [PSCustomObject] hidden $Module
-    [PSCustomObject] hidden $CategoryModule
+#region Page
 
-    Page([FileInfo] $ModuleFile) {
-        $this.ModuleFileName = $ModuleFile.Name
-        $this.Module = New-Module { Import-Module $args[0] -Force } -ArgumentList $ModuleFile -AsCustomObject
+function NewPage {
+    [CmdletBinding()]
+    [OutputType([PSCustomObject])]
+    param(
+        [Parameter(Mandatory)]
+        [FileInfo] $ModuleFile
+    )
 
-        [FileInfo] $categoryModuleFile = "$($ModuleFile.Directory)\category.psm1"
-        $this.CategoryModule = New-Module { Import-Module $args[0] -Force } -ArgumentList $categoryModuleFile -AsCustomObject
-    }
+    [PSCustomObject] $module = New-Module { Import-Module $args[0] -Force } -ArgumentList $ModuleFile -AsCustomObject
 
-    [String] GetTitle() {
-        return $this.Module.GetTitle()
-    }
+    [FileInfo] $categoryModuleFile = "$($ModuleFile.Directory)\category.psm1"
+    [PSCustomObject] $categoryModule = New-Module { Import-Module $args[0] -Force } -ArgumentList $categoryModuleFile -AsCustomObject
 
-    [String] GetCategoryTitle() {
-        return $this.CategoryModule.GetTitle()
-    }
-
-    [String] GetLinkPath() {
-        [String] $categorySlug = TitleToUrlPathSegment $this.GetCategoryTitle()
-        [String] $pageSlug = TitleToUrlPathSegment $this.GetTitle()
-        return "/$categorySlug/$pageSlug.html"
-    }
-
-    [Void] AddToOutline() {
-        $script:currentOutline = @()
-
-        $this.Module.RunPage() > $null
-
-        $script:outline[$this.GetTitle()] = $script:currentOutline
-    }
-
-    [String] GetHtml([Page[]] $AllPages) {
-        [Byte] $script:sectionLevel = 0
-        return OutputExamplePage $this $this.ModuleFileName $this.Module $AllPages
+    return [PSCustomObject]@{
+        PSTypeName = 'Page'
+        ModuleFileName = $ModuleFile.Name
+        Module = $module
+        CategoryModule = $categoryModule
     }
 }
 
+AddScriptMethod Page GetTitle {
+    [CmdletBinding()]
+    [OutputType([String])]
+    param()
+
+    return $this.Module.GetTitle()
+}
+
+AddScriptMethod Page GetCategoryTitle {
+    [CmdletBinding()]
+    [OutputType([String])]
+    param()
+
+    return $this.CategoryModule.GetTitle()
+}
+
+AddScriptMethod Page GetLinkPath {
+    [CmdletBinding()]
+    [OutputType([String])]
+    param()
+
+    [String] $categorySlug = TitleToUrlPathSegment $this.GetCategoryTitle()
+    [String] $pageSlug = TitleToUrlPathSegment $this.GetTitle()
+    return "/$categorySlug/$pageSlug.html"
+}
+
+AddScriptMethod Page AddToOutline {
+    [CmdletBinding()]
+    [OutputType([Void])]
+    param()
+
+    $script:currentOutline = @()
+
+    $this.Module.RunPage() > $null
+
+    $script:outline[$this.GetTitle()] = $script:currentOutline
+}
+
+AddScriptMethod Page GetHtml {
+    [CmdletBinding()]
+    [OutputType([String])]
+    param(
+        [Parameter(Mandatory)]
+        [PSTypeName('Page')]
+        [PSCustomObject[]] $AllPages
+    )
+
+    [Byte] $script:sectionLevel = 0
+    return OutputExamplePage $this $this.ModuleFileName $this.Module $AllPages
+}
+
+#endregio
 
 function GetVersionsTestedHtml {
     [CmdletBinding()]
@@ -97,12 +131,15 @@ function BuildSidebarHtml {
     param(
         [Parameter(Mandatory)]
         [AllowNull()]
-        [Page] $ContainingPage,
+        [PSTypeName('Page')]
+        [PSCustomObject] $ContainingPage,
+
         [Parameter(Mandatory)]
-        [Page[]] $Pages
+        [PSTypeName('Page')]
+        [PSCustomObject[]] $Pages
     )
 
-    [Dictionary[String, Page[]]] $categoryToPagesMap = [Dictionary[String, Page[]]]::new()
+    [Dictionary[String, [PSCustomObject[]]]] $categoryToPagesMap = [Dictionary[String, [PSCustomObject[]]]]::new()
     foreach ($page in $Pages) {
         [String] $categoryTitle = $page.GetCategoryTitle()
         if (-not $categoryToPagesMap.ContainsKey($categoryTitle)) {
@@ -119,7 +156,7 @@ function BuildSidebarHtml {
         [String] $categoryTitle = $_
 
         [String[]] $pageListItems = $categoryToPagesMap[$categoryTitle] | ForEach-Object {
-            [Page] $page = $_
+            [PSCustomObject] $page = $_
 
             [String] $link = "<a href=`"$($page.GetLinkPath())`">$($page.GetTitle())</a>"
             return "<li>$link</li>"
@@ -144,13 +181,19 @@ function BuildPageHtml {
     param(
         [Parameter(Mandatory)]
         [AllowNull()]
-        [Page] $ContainingPage,
+        [PSTypeName('Page')]
+        [PSCustomObject] $ContainingPage,
+
         [Parameter(Mandatory)]
         [String] $Title,
+
         [Parameter(Mandatory)]
         [String] $ContentHtml,
+
         [Parameter(Mandatory)]
-        [Page[]] $Pages,
+        [PSTypeName('Page')]
+        [PSCustomObject[]] $Pages,
+
         [Switch] $IncludeHighlightDeps
     )
 

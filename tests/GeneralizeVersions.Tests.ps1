@@ -45,17 +45,17 @@ function global:V {
 Describe "VersionTree" {
     InModuleScope docgen {
         It "starts out as empty" {
-            [VersionTree]::new().ToString() | Should -Be "root"
+            (NewVersionTree).ToString() | Should -Be "root"
         }
 
         It "can add a single version" {
-            [VersionTree] $tree = [VersionTree]::new()
+            [PSCustomObject] $tree = NewVersionTree
             $tree.Add((V 1.2.3))
             $tree.ToString() | Should -Be "(root (1 (2 3)))"
         }
 
         It "can add multiple versions" {
-            [VersionTree] $tree = [VersionTree]::new()
+            [PSCustomObject] $tree = NewVersionTree
             foreach ($version in $allVersions) {
                 $tree.Add($version)
             }
@@ -64,7 +64,7 @@ Describe "VersionTree" {
         }
 
         It "can mark a single version" {
-            [VersionTree] $tree = [VersionTree]::new()
+            [PSCustomObject] $tree = NewVersionTree
             foreach ($version in $allVersions) {
                 $tree.Add($version)
             }
@@ -75,7 +75,7 @@ Describe "VersionTree" {
         }
 
         It "can mark multiple versions" {
-            [VersionTree] $tree = [VersionTree]::new()
+            [PSCustomObject] $tree = NewVersionTree
             foreach ($version in $allVersions) {
                 $tree.Add($version)
             }
