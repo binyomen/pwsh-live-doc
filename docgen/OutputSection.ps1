@@ -8,7 +8,7 @@ function MakeHeading {
         [String] $Content
     )
 
-    return "<$TagName>$Content</$TagName>"
+    return "<$TagName id=`"$(TitleToUrlPathSegment $Content)`">$Content</$TagName>"
 }
 
 function OutputHeading {
@@ -41,19 +41,19 @@ function OutputSection {
     )
 
     if ($script:buildingOutline) {
-        $script:currentOutline += $HeadingText
+        $script:currentOutline[$HeadingText] = TitleToUrlPathSegment $HeadingText
         & $Code
         return
     }
 
-    $script:sectionLevel += 1;
+    $script:sectionLevel += 1
     $html = '<section>'
 
     $html += OutputHeading $script:sectionLevel $HeadingText
     $html += (& $Code) -join "`n"
 
     $html += '</section>'
-    $script:sectionLevel -= 1;
+    $script:sectionLevel -= 1
 
     return $html
 }

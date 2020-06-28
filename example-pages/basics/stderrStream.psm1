@@ -117,7 +117,7 @@ function RunPage {
     OutputSection 'Class methods' {
         OutputText @'
         This behavior has interesting consequences for class methods (See
-        [[methodOutput.psm1]]). Since non-void methods automatically suppress
+        [[Method stdio#Stderr]]). Since non-void methods automatically suppress
         stdio, it's as if they were redirecting stderr to $null, so printing to
         stderr within a non-void method will produce an exception when
         `ErrorActionPreference` is `Stop`.

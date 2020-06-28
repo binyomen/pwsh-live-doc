@@ -87,3 +87,16 @@ function FormatPageText {
     [String] $formattedText = $deindentedLines -join "`n"
     return $formattedText
 }
+
+function GetRest {
+    [CmdletBinding()]
+    [OutputType([Object[]])]
+    param(
+        [Parameter(Mandatory)]
+        [Object[]] $List # oooh, it's generic!
+    )
+
+    return $List.Count -gt 1 ?
+        $List[1..($List.Count - 1)] :
+        ,@()
+}

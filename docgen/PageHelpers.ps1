@@ -91,11 +91,11 @@ AddScriptMethod Page AddToOutline {
     [OutputType([Void])]
     param()
 
-    $script:currentOutline = @()
+    [Dictionary[String, String]] $script:currentOutline = [Dictionary[String, String]]::new()
 
     $this.Module.RunPage() > $null
 
-    $script:outline[$this.GetTitle()] = $script:currentOutline
+    $script:outline[$this.GetTitle()] = [Tuple]::Create($this.GetLinkPath(), $script:currentOutline)
 }
 
 AddScriptMethod Page GetHtml {
