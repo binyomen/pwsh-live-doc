@@ -1,42 +1,65 @@
-[String[][]] $script:windowsPowershellExes = @(
-    @('powershell', '-Version', '2'),
-    @('powershell', '-Version', '5.1')
+[Tuple[String, String][]] $script:windowsPowershellCommands = @(
+    [Tuple]::Create('powershell', '-Version 2'),
+    [Tuple]::Create('powershell', '-Version 5.1')
 )
 
-[Tuple[[String[]], System.Management.Automation.SemanticVersion][]] $script:allExeTuples = @()
+[PSCustomObject] $script:allExes = @()
+
+function NewPwshExe {
+    [CmdletBinding()]
+    [OutputType([PSCustomObject])]
+    param(
+        [Parameter(Mandatory)]
+        [String] $File,
+        [String] $InitialArgs = ''
+    )
+
+    [String] $command = $InitialArgs.Length -eq 0 ? $File : "$File $InitialArgs"
+
+    [SemanticVersion] $version = GetExeVersion $command
+
+    return [PSCustomObject]@{
+        PSTypeName = 'PwshExe'
+        File = $File
+        InitialArgs = $InitialArgs
+        Version = $version
+    }
+}
 
 function GetPowerShellExesToTest {
     [CmdletBinding()]
-    [OutputType([Tuple[[String[]], SemanticVersion][]])]
+    [OutputType([PSCustomObject[]])]
     param(
         [SemanticVersion] $MinVersion = [SemanticVersion]::new(0)
     )
 
-    if ($script:allExeTuples.Count -eq 0) {
+    if ($script:allExes.Count -eq 0) {
         Write-Host "Caching list of exes..."
 
         [String] $packageDir = "$PSScriptRoot\..\pwsh-packages"
         [DirectoryInfo[]] $packages = Get-ChildItem $packageDir
-        [String[]] $packageExes = $packages | ForEach-Object { ,@("$($_.FullName)\pwsh.exe") }
+        [String[]] $packageCommands = $packages | ForEach-Object { "$($_.FullName)\pwsh.exe" }
 
-        [String[][]] $allExes = $windowsPowershellExes + $packageExes
+        [PSCustomObject[]] $packageExes = $packageCommands | `
+            ForEach-Object { NewPwshExe $_ }
+        [PSCustomObject[]] $windowsPowershellExes = $script:windowsPowershellCommands | `
+            ForEach-Object { NewPwshExe $_.Item1 $_.Item2 }
 
-        $script:allExeTuples = $allExes |`
-            ForEach-Object { [Tuple]::Create($_, (GetExeVersion $_)) }
+        $script:allExes = $packageExes + $windowsPowershellExes
     }
 
-    return $script:allExeTuples |`
+    return $script:allExes |`
         Where-Object {
-            [Tuple[[String[]], SemanticVersion]] $tuple = $_
+            [PSCustomObject] $exe = $_
             if ($script:options.TestOnlyMajorVersions) {
-                return ($tuple.Item2.Major -eq 2) -or
-                    ($tuple.Item2.Major -eq 5) -or
-                    (($tuple.Item2.Minor -eq 0) -and ($tuple.Item2.Patch -eq 0))
+                return ($exe.Version.Major -eq 2) -or
+                    ($exe.Version.Major -eq 5) -or
+                    (($exe.Version.Minor -eq 0) -and ($exe.Version.Patch -eq 0))
             } else {
                 return $true
             }
-        } |`
-        Where-Object { $_.Item2 -ge $MinVersion }
+        } | `
+        Where-Object { $_.Version -ge $MinVersion }
 }
 
 function RemoveBom {
@@ -59,18 +82,20 @@ function GetExeVersion {
     [OutputType([SemanticVersion])]
     param(
         [Parameter(Mandatory)]
-        [String[]] $Exe
+        [String] $Command
     )
 
-    if ($Exe[0] -match 'v([0-9]+\.[0-9]+\.[0-9]+)\\pwsh.exe$') {
+    if ($Command -match 'v([0-9]+\.[0-9]+\.[0-9]+)\\pwsh.exe$') {
+        # Just get the version from the file path, which is much more efficient
+        # than running the exe.
         [SemanticVersion] $version = [SemanticVersion]::new($matches[1])
     } else {
-        [String] $rawVersionString = Invoke-Expression "$Exe -NoProfile -Command `"```$PSVersionTable.PSVersion.ToString()`""
+        [String] $rawVersionString = Invoke-Expression "$Command -NoProfile -NonInteractive -Command `"```$PSVersionTable.PSVersion.ToString()`""
 
         # Sometimes with PowerShell v2 there's a BOM at the beginning of the output string.
         [String] $versionString = RemoveBom $rawVersionString
 
-        if ($Exe[0] -eq 'powershell') {
+        if ($Command.StartsWith('powershell')) {
             [Version] $legacyVersion = [Version]::new($versionString)
             [SemanticVersion] $version = [SemanticVersion]::new(`
                 $legacyVersion.Major,`
@@ -89,6 +114,8 @@ function NewExampleOutput {
     [OutputType([PSCustomObject])]
     param(
         [Parameter(Mandatory)]
+        [SemanticVersion] $Version,
+        [Parameter(Mandatory)]
         [AllowEmptyString()]
         [String] $Stdout,
         [Parameter(Mandatory)]
@@ -98,6 +125,7 @@ function NewExampleOutput {
 
     return [PSCustomObject]@{
         PSTypeName = 'ExampleOutput'
+        Version = $Version
         Stdout = $Stdout
         Stderr = $Stderr
     }
@@ -110,7 +138,8 @@ function RunAndGatherOutput {
         [Parameter(Mandatory)]
         [DirectoryInfo] $WorkingDir,
         [Parameter(Mandatory)]
-        [String[]] $Exe,
+        [PSTypeName('PwshExe')]
+        [PSCustomObject] $Exe,
         [Parameter(Mandatory)]
         [String] $Arguments
     )
@@ -118,10 +147,7 @@ function RunAndGatherOutput {
     [FileInfo] $stdoutFile = New-Item "$WorkingDir\__stdout"
     [FileInfo] $stderrFile = New-Item "$WorkingDir\__stderr"
 
-    [String] $exeFile = $Exe[0]
-    [String[]] $exeArgs = $Exe.Count -gt 1 ? $Exe[1..($Exe.Count - 1)] : @()
-
-    Start-Process $exeFile -Args ($exeArgs + $Arguments) `
+    Start-Process $Exe.File -Args "$($Exe.InitialArgs) $Arguments" `
         -RedirectStandardOutput $stdoutFile -RedirectStandardError $stderrFile `
         -WorkingDirectory $WorkingDir -Wait -NoNewWindow
 
@@ -129,7 +155,7 @@ function RunAndGatherOutput {
     [String] $stderr = Get-Content -Raw $stderrFile
 
     # Sometimes with PowerShell v2 there's a BOM at the beginning of the output string.
-    [PSCustomObject] $output = NewExampleOutput (RemoveBom $stdout) (RemoveBom $stderr)
+    [PSCustomObject] $output = NewExampleOutput $Exe.Version (RemoveBom $stdout) (RemoveBom $stderr)
     return $output
 }
 
@@ -138,7 +164,8 @@ function InvokeExe {
     [OutputType([PSCustomObject])]
     param(
         [Parameter(Mandatory)]
-        [String[]] $Exe,
+        [PSTypeName('PwshExe')]
+        [PSCustomObject] $Exe,
         [Parameter(Mandatory)]
         [String] $Code
     )

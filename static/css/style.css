@@ -1,5 +1,5 @@
 :root {
-    --output-view-border: 2px solid black;
+    --stream-view-border: 2px solid black;
 }
 
 body {
@@ -70,25 +70,38 @@ main {
     overflow: auto;
 }
 
-.output-view > .output-view-flex {
-    display: flex;
-    flex-wrap: wrap;
-
-    max-width: 100%;
+.stream-view > .output-view-heading {
+    width: 100%;
+    font-size: 1.3em;
 }
 
-.output-view > .output-view-flex > div {
-    flex-grow: 1;
+.stream-view-flex {
+    display: flex;
+    flex-wrap: wrap;
+    overflow: auto;
 
     box-sizing: border-box;
-    border: var(--output-view-border);
-    margin-right: -1.5px;
-    margin-bottom: -1.5px;
+    border-bottom: var(--stream-view-border);
+    border-right: var(--stream-view-border);
+}
 
-    --output-view-padding: 0.7em;
-    padding-left: var(--output-view-padding);
-    padding-right: var(--output-view-padding);
-    padding-bottom: var(--output-view-padding);
+.stream-view-flex > div {
+    flex: 1;
+
+    box-sizing: border-box;
+    border-top: var(--stream-view-border);
+    border-left: var(--stream-view-border);
+
+    --stream-view-padding: 0.7em;
+    padding-left: var(--stream-view-padding);
+    padding-right: var(--stream-view-padding);
+    padding-bottom: var(--stream-view-padding);
+}
+
+.stream-view-flex > div > .output-view-heading {
+    width: 100%;
+    font-size: 1.1em;
+    border-bottom: var(--stream-view-border);
 }
 
 .output-view-heading {
@@ -100,39 +113,10 @@ main {
     font-size: 1.5em;
 }
 
-.output-view > .output-view-flex > div > .output-view-heading {
-    width: 100%;
-    font-size: 1.3em;
-    border-bottom: var(--output-view-border);
-}
-
-.output-view > .output-view-flex > div > div > .output-view-heading {
-    font-size: 1.1em;
-}
-
 .output-text {
     background: #f0f0f0;
     padding: 0.5em;
     margin: 0;
-
-    counter-reset: line-number;
-    white-space: pre-wrap;
-}
-
-.output-line {
-    display: inline-block;
-    text-indent: -3em;
-    padding-left: 3em;
-}
-
-.output-text > span::before, .output-text > details > span::before, .output-text > details > summary::before {
-    counter-increment: line-number;
-    content: counter(line-number);
-
-    /* display: inline-block; */
-    border-right: 1px solid black;
-    padding-right: 0.5em;
-    margin-right: 0.5em;
 }
 
 #page-nav {

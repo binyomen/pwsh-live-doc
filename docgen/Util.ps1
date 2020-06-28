@@ -37,6 +37,7 @@ function EscapeHtml {
     [OutputType([String])]
     param(
         [Parameter(Mandatory)]
+        [AllowEmptyString()]
         [String] $Text
     )
 

@@ -26,6 +26,8 @@ function RunPage {
             cmd /c 'echo redirecting stderr to stdout >&2' 2>&1
             cmd /c 'echo redirecting stderr to $null >&2' 2> $null
             cmd /c 'echo redirecting stderr to a file >&2' 2> error.txt
+            $v = cmd /c 'echo assigning command result to a variable >&2'
+            $v = cmd /c 'echo assigning redirected command result to a variable >&2' 2>&1
             [Void] (cmd /c 'echo casting stderr command to Void >&2')
             [Void] (cmd /c 'echo casting redirected stderr command to Void >&2' 2>&1)
             cmd /c 'echo piping stderr command to Out-Null >&2' | Out-Null
@@ -84,6 +86,16 @@ function RunPage {
             }
             try {
                 cmd /c 'echo redirecting stderr to a file >&2' 2> error.txt
+            } catch {
+                Write-Output "Caught: $_"
+            }
+            try {
+                $v = cmd /c 'echo assigning command result to a variable >&2'
+            } catch {
+                Write-Output "Caught: $_"
+            }
+            try {
+                $v = cmd /c 'echo assigning redirected command result to a variable >&2' 2>&1
             } catch {
                 Write-Output "Caught: $_"
             }

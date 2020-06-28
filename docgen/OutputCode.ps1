@@ -1,81 +1,47 @@
-[String] $script:outputLinePrefix = '<span class="output-line">'
-[String] $script:outputLineSuffix = '</span>'
-
 function RunPowerShellExe {
     [CmdletBinding()]
-    [OutputType([Tuple[SemanticVersion, PSCustomObject][]])]
+    [OutputType([PSCustomObject])]
     param(
         [Parameter(Mandatory)]
-        [Tuple[[String[]], SemanticVersion]] $Tuple,
+        [PSTypeName('PwshExe')]
+        [PSCustomObject] $Exe,
         [Parameter(Mandatory)]
         [String] $CodeToRun
     )
 
-    Write-Host "Running $($Tuple.Item1)"
+    Write-Host "Running $($Exe.File) $($Exe.InitialArgs)"
 
-    [PSCustomObject] $output = InvokeExe $Tuple.Item1 $CodeToRun
-    return [Tuple]::Create($Tuple.Item2, $output)
+    return InvokeExe $Exe $CodeToRun
 }
 
-function FoldOutput {
-    [CmdletBinding()]
-    [OutputType([String])]
-    param(
-        [Parameter(Mandatory)]
-        [AllowEmptyString()]
-        [String] $Output
-    )
-
-    [String[]] $lines = $Output -split "`n"
-    [String[][]] $groups = @()
-
-    # Collapse stack traces
-    [String[]] $currentGroup = @()
-    [String[]] $blankLines = @()
-    foreach ($line in $lines) {
-        if ($line -match "$script:outputLinePrefix\s*(At |\+)") {
-            $currentGroup += $line
-            $currentGroup += $blankLines
-            $blankLines = @()
-        } elseif ($line -match "$script:outputLinePrefix\s*$script:outputLineSuffix") {
-            $blankLines += $line
-            if ($currentGroup.Count -gt 1) {
-                $currentGroup += $blankLines
-                $blankLines = @()
-            }
-        } else {
-            if ($currentGroup.Count -gt 0) {
-                $groups += ,$currentGroup
-                foreach ($blankLine in $blankLines) {
-                    $groups += ,$blankLine
-                }
-                $blankLines = @()
-                $currentGroup = @()
-            }
-
-            $currentGroup += $line
-        }
-    }
-    if ($currentGroup.Count -gt 0) {
-        $groups += ,$currentGroup
-    }
-
-    [String] $html = ''
-    foreach ($group in $groups) {
-        if ($group.Count -gt 1) {
-            [String] $groupedLines = $group[1..($group.Count - 1)] -join "`n"
-            $html += "<details><summary>$($group[0])</summary>$groupedLines</details>"
-        } else {
-            $html += $group[0] + "`n"
-        }
-    }
-
-    return $html
-}
-
-function GetOutputToVersionMap {
+function GroupVersionsByOutput {
     [CmdletBinding()]
     [OutputType([Dictionary[String, SemanticVersion[]]])]
+    param(
+        [Parameter(Mandatory)]
+        [PSTypeName('ExampleOutput')]
+        [PSCustomObject[]] $Outputs,
+        [Parameter(Mandatory)]
+        [ScriptBlock] $StreamGetter
+    )
+
+    [Dictionary[String, SemanticVersion[]]] $streamMap = [Dictionary[String, SemanticVersion[]]]::new()
+    foreach ($output in $Outputs) {
+        [String] $streamString = & $StreamGetter $output
+
+        if (-not $streamMap.ContainsKey($streamString)) {
+            $streamMap[$streamString] = @()
+        }
+
+        $streamMap[$streamString] += $output.Version
+    }
+
+    return $streamMap
+}
+
+function GetOutputs {
+    [CmdletBinding()]
+    [OutputType([PSCustomObject[]])]
     param(
         [Parameter(Mandatory)]
         [SemanticVersion] $MinVersion,
@@ -83,43 +49,15 @@ function GetOutputToVersionMap {
         [String] $Code
     )
 
-    [Tuple[[String[]], SemanticVersion][]] $exesToTest = GetPowerShellExesToTest $MinVersion
+    [PSCustomObject[]] $exesToTest = GetPowerShellExesToTest $MinVersion
 
-    [Tuple[SemanticVersion, PSCustomObject][]] $powershellResults = $exesToTest | ForEach-Object -ThrottleLimit 8 -Parallel {
-        [Tuple[[String[]], System.Management.Automation.SemanticVersion]] $tuple = $_
+    return $exesToTest | ForEach-Object -ThrottleLimit 8 -Parallel {
+        [PSCustomObject] $exe = $_
 
         [PSModuleInfo] $docgen = Import-Module "$using:PSScriptRoot\..\docgen" -Force -PassThru
         # Run in the context of the docgen module
-        return & $docgen { RunPowerShellExe $tuple $using:Code }
+        return & $docgen { RunPowerShellExe $exe $using:Code }
     }
-
-    [Dictionary[String, SemanticVersion[]]] $outputToVersionMap = [Dictionary[String, SemanticVersion[]]]::new()
-    foreach ($tuple in $powershellResults) {
-        [SemanticVersion] $version = $tuple.Item1
-        [String] $output = ConvertTo-Json $tuple.Item2
-
-        if (-not $outputToVersionMap.ContainsKey($output)) {
-            $outputToVersionMap[$output] = @()
-        }
-
-        $outputToVersionMap[$output] += $version
-    }
-
-    return $outputToVersionMap
-}
-
-function MarkLines {
-    [CmdletBinding()]
-    [OutputType([String])]
-    param(
-        [Parameter(Mandatory)]
-        [String] $Text
-    )
-
-    [String[]] $lines = $Text -split "`n"
-    [String[]] $markedLines = $lines | ForEach-Object { "$script:outputLinePrefix$_$script:outputLineSuffix" }
-
-    return $markedLines -join "`n"
 }
 
 function FormatOutputStream {
@@ -128,24 +66,58 @@ function FormatOutputStream {
     param(
         [Parameter(Mandatory)]
         [AllowEmptyString()]
-        [String] $Stream,
+        [String] $StreamString
+    )
+
+    return "<pre class=`"output-text`">$(EscapeHtml $StreamString)</pre>"
+}
+
+function GetStreamViewHtml {
+    [CmdletBinding()]
+    [OutputType([String])]
+    param(
+        [Parameter(Mandatory)]
+        [SemanticVersion[]] $AllVersions,
+        [Parameter(Mandatory)]
+        [Dictionary[String, SemanticVersion[]]] $StreamMap,
         [Parameter(Mandatory)]
         [String] $StreamName
     )
 
-    [String] $html = ''
-
-    if ($Stream.Length -gt 0) {
-        [String] $escaped = EscapeHtml $Stream
-        [String] $linesMarked = MarkLines $escaped
-        [String] $folded = FoldOutput $linesMarked
-
-        [String] $streamId = (New-Guid).Guid
-        $html += "<div class=`"output-view-heading`" id=`"$streamId`">$StreamName</div>"
-        $html += "<pre class=`"output-text`" aria-labelledby=`"$streamId`">$folded</pre>"
+    # Create a map of stream string to generalized version string.
+    [Dictionary[String, String]] $generalizedMap = [Dictionary[String, String]]::new()
+    foreach ($streamString in $streamMap.Keys) {
+        [SemanticVersion[]] $versionList = $streamMap[$streamString]
+        [String[]] $sortedVersions = GeneralizeVersions $AllVersions $versionList | Sort-Object
+        $generalizedMap[$streamString] = $sortedVersions -join ', '
     }
 
-    return $html
+    [String[]] $sortedKeys = $generalizedMap.Keys | `
+        Sort-Object @{ Expression = { $generalizedMap[$_] } }
+
+    [String[]] $versionSections = @()
+    foreach ($streamString in $sortedKeys) {
+            [String] $versionString = $generalizedMap[$streamString]
+            [String] $versionGroupId = (New-Guid).Guid
+            $versionSections += @"
+                <div>
+                    <div class=`"output-view-heading`" id=`"$versionGroupId`">$versionString</div>
+                    <div aria-labelledby=`"$versionGroupId`">
+                        $(FormatOutputStream $streamString)
+                    </div>
+                </div>
+"@
+    }
+
+    [String] $streamId = (New-Guid).Guid
+    return @"
+        <div class=`"stream-view`">
+            <div class =`"output-view-heading`" id=`"$streamId`">$StreamName</div>
+            <div class=`"stream-view-flex`" aria-labelledby=`"$streamId`">
+                $versionSections
+            </div>
+        </div>
+"@
 }
 
 function BuildOutputView {
@@ -158,48 +130,23 @@ function BuildOutputView {
         [SemanticVersion] $MinVersion
     )
 
-    [String] $html = '<div class="output-view">'
-
     [String] $topLevelId = (New-Guid).Guid
+    [String] $html = "<div class=`"output-view`" aria-labelledby=`"$topLevelId`">"
     $html += "<div class=`"output-view-heading`" id=`"$topLevelId`">Output by version</div>"
-    $html += "<div class=`"output-view-flex`" aria-labelledby=`"$topLevelId`">"
 
-    # Create a map of output string to list of versions. This lets us group
-    # versions by what their output is.
-    [Dictionary[String, SemanticVersion[]]] $outputToVersionMap = GetOutputToVersionMap $minVersionSemantic $codeAsString
+    [PSCustomObject[]] $outputs = GetOutputs $minVersionSemantic $codeAsString
 
-    [SemanticVersion[]] $allVersions = $outputToVersionMap.Values | `
-        ForEach-Object { [SemanticVersion[]] $all = @() } { $all = $all + $_ | Select-Object -Unique } { $all }
+    # Create maps of stdout/stderr strings to list of versions. This lets us
+    # group versions by what their output is.
+    [Dictionary[String, SemanticVersion[]]] $stdoutMap = GroupVersionsByOutput $outputs { $args[0].Stdout }
+    [Dictionary[String, SemanticVersion[]]] $stderrMap = GroupVersionsByOutput $outputs { $args[0].Stderr }
 
-    # Create a map of output string to generalized version string.
-    [Dictionary[String, String]] $outputToGeneralizedVersionMap = [Dictionary[String, String]]::new()
-    foreach ($outputJson in $outputToVersionMap.Keys) {
-        [SemanticVersion[]] $versionList = $outputToVersionMap[$outputJson]
-        [String[]] $sortedVersions = GeneralizeVersions $allVersions $versionList | Sort-Object
-        $outputToGeneralizedVersionMap[$outputJson] = $sortedVersions -join ', '
-    }
-    [String[]] $sortedKeys = $outputToGeneralizedVersionMap.Keys | `
-        Sort-Object @{ Expression = { $outputToGeneralizedVersionMap[$_] } }
+    [SemanticVersion[]] $allVersions = $outputs | ForEach-Object { $_.Version }
 
-    [String[]] $versionSections = @()
-    foreach ($outputJson in $sortedKeys) {
-            [PSCustomObject] $output = ConvertFrom-Json $outputJson
-            [String] $versionString = $outputToGeneralizedVersionMap[$outputJson]
+    $html += GetStreamViewHtml $allVersions $stdoutMap 'Stdout'
+    $html += GetStreamViewHtml $allVersions $stderrMap 'Stderr'
 
-            [String] $versionGroupId = (New-Guid).Guid
-            $versionSections += @"
-                <div>
-                    <div class=`"output-view-heading`" id=`"$versionGroupId`">$versionString</div>
-                    <div aria-labelledby=`"$versionGroupId`">
-                        $(FormatOutputStream $output.Stdout 'stdout')
-                        $(FormatOutputStream $output.Stderr 'stderr')
-                    </div>
-                </div>
-"@
-    }
-
-    $html += $versionSections -join "`n"
-    $html += "</div></div>"
+    $html += "</div>"
 
     return $html
 }

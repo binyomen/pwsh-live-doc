@@ -111,14 +111,14 @@ AddScriptMethod Page GetHtml {
     return OutputExamplePage $this $this.ModuleFileName $this.Module $AllPages
 }
 
-#endregio
+#endregion
 
 function GetVersionsTestedHtml {
     [CmdletBinding()]
     [OutputType([String])]
     param()
 
-    [SemanticVersion[]] $versionsTested = GetPowerShellExesToTest | ForEach-Object { $_.Item2 } | Sort-Object
+    [SemanticVersion[]] $versionsTested = GetPowerShellExesToTest | ForEach-Object { $_.Version } | Sort-Object
     return ($versionsTested | ForEach-Object { "<span class=`"tested-version`">$_</span>" }) -join ", "
 }
 
