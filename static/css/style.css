@@ -70,22 +70,31 @@ main {
     overflow: auto;
 }
 
-.stream-view > .output-view-heading {
-    width: 100%;
-    font-size: 1.3em;
+.stream-view-scroll {
+    overflow: auto;
 }
 
-.stream-view-flex {
+/* This element is flex container for the stream outputs. It needs to be a
+ * child of the scrollable element so that all flex children will have the full
+ * width of the scrolled content. Without this, output text backgrounds
+ * wouldn't all reach to the end of the view.
+ *
+ * `width` is `min-content` so that its width extends further than the
+ * unscrolled parent. `min-width` is `100%` so that if the content is smaller
+ * than the width of the parent, we still expand to fill the parent. */
+.stream-view-scroll > div {
     display: flex;
     flex-wrap: wrap;
-    overflow: auto;
+
+    width: min-content;
+    min-width: 100%;
 
     box-sizing: border-box;
     border-bottom: var(--stream-view-border);
     border-right: var(--stream-view-border);
 }
 
-.stream-view-flex > div {
+.stream-view-flex-item {
     flex: 1;
 
     box-sizing: border-box;
@@ -98,19 +107,17 @@ main {
     padding-bottom: var(--stream-view-padding);
 }
 
-.stream-view-flex > div > .output-view-heading {
-    width: 100%;
-    font-size: 1.1em;
-    border-bottom: var(--stream-view-border);
-}
-
 .output-view-heading {
     padding-top: 0.5em;
     padding-bottom: 0.5em;
 }
 
-.output-view > .output-view-heading {
+.stream-view > .output-view-heading {
     font-size: 1.5em;
+}
+
+.stream-view-flex-item > .output-view-heading {
+    font-size: 1.3em;
 }
 
 .output-text {

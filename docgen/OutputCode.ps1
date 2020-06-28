@@ -72,6 +72,18 @@ function FormatOutputStream {
     return "<pre class=`"output-text`">$(EscapeHtml $StreamString)</pre>"
 }
 
+function HasOutput {
+    [CmdletBinding()]
+    [OutputType([Boolean])]
+    param(
+        [Parameter(Mandatory)]
+        [Dictionary[String, SemanticVersion[]]] $StreamMap
+    )
+
+    [Boolean] $noOutut = ($StreamMap.Count -eq 0) -or (($StreamMap.Count -eq 1) -and ($StreamMap.ContainsKey('')))
+    return -not $noOutut
+}
+
 function GetStreamViewHtml {
     [CmdletBinding()]
     [OutputType([String])]
@@ -83,6 +95,10 @@ function GetStreamViewHtml {
         [Parameter(Mandatory)]
         [String] $StreamName
     )
+
+    if (-not (HasOutput $StreamMap)) {
+        return ''
+    }
 
     # Create a map of stream string to generalized version string.
     [Dictionary[String, String]] $generalizedMap = [Dictionary[String, String]]::new()
@@ -100,7 +116,7 @@ function GetStreamViewHtml {
             [String] $versionString = $generalizedMap[$streamString]
             [String] $versionGroupId = (New-Guid).Guid
             $versionSections += @"
-                <div>
+                <div class=`"stream-view-flex-item`">
                     <div class=`"output-view-heading`" id=`"$versionGroupId`">$versionString</div>
                     <div aria-labelledby=`"$versionGroupId`">
                         $(FormatOutputStream $streamString)
@@ -113,8 +129,10 @@ function GetStreamViewHtml {
     return @"
         <div class=`"stream-view`">
             <div class =`"output-view-heading`" id=`"$streamId`">$StreamName</div>
-            <div class=`"stream-view-flex`" aria-labelledby=`"$streamId`">
-                $versionSections
+            <div class=`"stream-view-scroll`" aria-labelledby=`"$streamId`">
+                <div>
+                    $versionSections
+                </div>
             </div>
         </div>
 "@
@@ -130,9 +148,7 @@ function BuildOutputView {
         [SemanticVersion] $MinVersion
     )
 
-    [String] $topLevelId = (New-Guid).Guid
-    [String] $html = "<div class=`"output-view`" aria-labelledby=`"$topLevelId`">"
-    $html += "<div class=`"output-view-heading`" id=`"$topLevelId`">Output by version</div>"
+    [String] $html = "<div class=`"output-view`">"
 
     [PSCustomObject[]] $outputs = GetOutputs $minVersionSemantic $codeAsString
 
@@ -143,8 +159,12 @@ function BuildOutputView {
 
     [SemanticVersion[]] $allVersions = $outputs | ForEach-Object { $_.Version }
 
-    $html += GetStreamViewHtml $allVersions $stdoutMap 'Stdout'
-    $html += GetStreamViewHtml $allVersions $stderrMap 'Stderr'
+    if ((-not (HasOutput $stdoutMap)) -and (-not (HasOutput $stderrMap))) {
+        $html += '<p>No output</p>'
+    } else {
+        $html += GetStreamViewHtml $allVersions $stdoutMap 'Stdout'
+        $html += GetStreamViewHtml $allVersions $stderrMap 'Stderr'
+    }
 
     $html += "</div>"
 
