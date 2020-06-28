@@ -11,11 +11,26 @@ function RunPage {
     [OutputType([String[]])]
     param()
 
+        OutputText @'
+        Note: On GitHub Actions runners (where this site was generated), the
+        output is different than on my (benweedon's) machine. [Issue
+        29](https://github.com/benweedon/pwsh-live-doc/issues/29) tracks this.
+'@
+
     OutputSection 'Basic case' {
         OutputText @'
-        When `ErrorActionPreference` is `Continue`, stderr in PowerShell behaves
-        similarly to stderr in other shells. Any stderr output by commands you call
-        will be sent directly to the PowerShell process's own stderr.
+        When `ErrorActionPreference` is `Continue`, stderr in PowerShell Core
+        behaves similarly to stderr in other shells. Any stderr output by
+        commands you call will be sent directly to the PowerShell process's own
+        stderr. It is interesting to note, however, that assigning the stderr
+        command a variable, casting it to `Void`, or piping it to `Out-Null`
+        results in the stderr stream being received by stdout.
+
+        In PowerShell 2 and 5, the result is much different. Not only
+        are stack traces printed out to stderr (except for the first print),
+        nothing is printed to stdout. Everything is printed to stderr except
+        redirecting to `$null` or a file and the redirect version of the
+        variable, `Void`, and `Out-Null` cases.
 '@
 
         OutputCode {
@@ -27,7 +42,9 @@ function RunPage {
             cmd /c 'echo redirecting stderr to $null >&2' 2> $null
             cmd /c 'echo redirecting stderr to a file >&2' 2> error.txt
             $v = cmd /c 'echo assigning command result to a variable >&2'
+            Write-Output "`$v: $v"
             $v = cmd /c 'echo assigning redirected command result to a variable >&2' 2>&1
+            Write-Output "`$v: $v"
             [Void] (cmd /c 'echo casting stderr command to Void >&2')
             [Void] (cmd /c 'echo casting redirected stderr command to Void >&2' 2>&1)
             cmd /c 'echo piping stderr command to Out-Null >&2' | Out-Null
@@ -37,8 +54,8 @@ function RunPage {
         }
 
         OutputText @'
-        Even when `ErrorActionPreference` is `Stop`, the behavior is partially the
-        same.
+        If you redirect stderr while `ErrorActionPreference` is `Stop`, an
+        exception is generated.
 '@
 
         OutputCode {
@@ -54,26 +71,6 @@ function RunPage {
             } catch {
                 Write-Output "Caught: $_"
             }
-            try {
-                [Void] (cmd /c 'echo casting stderr command to Void >&2')
-            } catch {
-                Write-Output "Caught: $_"
-            }
-            try {
-                cmd /c 'echo piping stderr command to Out-Null >&2' | Out-Null
-            } catch {
-                Write-Output "Caught: $_"
-            }
-        }
-
-        OutputText @'
-        However, when you redirect stderr while `ErrorActionPreference` is `Stop`,
-        an exception will be generated.
-'@
-
-        OutputCode {
-            $local:ErrorActionPreference = 'Stop'
-
             try {
                 cmd /c 'echo redirecting stderr to stdout >&2' 2>&1
             } catch {
@@ -91,16 +88,28 @@ function RunPage {
             }
             try {
                 $v = cmd /c 'echo assigning command result to a variable >&2'
+                Write-Output "`$v: $v"
             } catch {
                 Write-Output "Caught: $_"
             }
             try {
                 $v = cmd /c 'echo assigning redirected command result to a variable >&2' 2>&1
+                Write-Output "`$v: $v"
+            } catch {
+                Write-Output "Caught: $_"
+            }
+            try {
+                [Void] (cmd /c 'echo casting stderr command to Void >&2')
             } catch {
                 Write-Output "Caught: $_"
             }
             try {
                 [Void] (cmd /c 'echo casting redirected stderr command to Void >&2' 2>&1)
+            } catch {
+                Write-Output "Caught: $_"
+            }
+            try {
+                cmd /c 'echo piping stderr command to Out-Null >&2' | Out-Null
             } catch {
                 Write-Output "Caught: $_"
             }
@@ -157,12 +166,9 @@ function RunPage {
         }
 
         OutputText @'
-        When `ErrorActionPreference` is `Continue`, it seems to mostly behave like
-        you'd expect. Non-void methods suppress stderr, and void methods don't. On
-        GitHub Actions runners, though (where this site was generated), stderr
-        seems to be emitted as a single line. This isn't the case on my
-        (benweedon's) machine. [Issue
-        29](https://github.com/benweedon/pwsh-live-doc/issues/29) tracks this.
+        When `ErrorActionPreference` is `Continue`, it seems to mostly behave
+        like you'd expect. Non-void methods suppress stderr, and void methods
+        don't.
 '@
 
         OutputCode -MinVersion 5 {
