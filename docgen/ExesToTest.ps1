@@ -117,9 +117,6 @@ function NewLineOutput {
         [UInt32] $LineNumber,
         [Parameter(Mandatory)]
         [AllowEmptyString()]
-        [String] $LineText,
-        [Parameter(Mandatory)]
-        [AllowEmptyString()]
         [String] $Stdout,
         [Parameter(Mandatory)]
         [AllowEmptyString()]
@@ -129,7 +126,6 @@ function NewLineOutput {
     return [PSCustomObject]@{
         PSTypeName = 'LineOutput'
         LineNumber = $LineNumber
-        LineText = $LineText
         Stdout = $Stdout
         Stderr = $Stderr
     }
@@ -181,20 +177,15 @@ AddScriptMethod ExampleOutput Stderr {
     return $streamList -join ''
 } ScriptProperty
 
-AddScriptMethod ExampleOutput GetLine {
+AddScriptMethod ExampleOutput GetLines {
     [CmdletBinding()]
-    [OutputType([PSCustomObject])]
+    [OutputType([PSCustomObject[]])]
     param(
         [Parameter(Mandatory)]
         [UInt32] $LineNumber
     )
 
-    foreach ($line in $this.Lines) {
-        if ($line.LineNumber -eq $LineNumber) {
-            return $line
-        }
-    }
-    return $null
+    return ,@($this.Lines | Where-Object { $_.LineNumber -eq $LineNumber })
 }
 
 function TakeSuffix {
@@ -226,9 +217,6 @@ function CreateLineOutput {
         [Parameter(Mandatory)]
         [UInt32] $LineNumber,
         [Parameter(Mandatory)]
-        [AllowEmptyString()]
-        [String] $LineText,
-        [Parameter(Mandatory)]
         [FileInfo] $StdoutFile,
         [Parameter(Mandatory)]
         [FileInfo] $StderrFile
@@ -241,7 +229,7 @@ function CreateLineOutput {
     [String] $newStdout = (TakeSuffix $CurrentStdoutLines $stdout) -join "`n"
     [String] $newStderr = (TakeSuffix $CurrentStderrLines $stderr) -join "`n"
 
-    return NewLineOutput $LineNumber $LineText $newStdout $newStderr
+    return NewLineOutput $LineNumber $newStdout $newStderr
 }
 
 function RunAndGatherOutput {
@@ -276,24 +264,21 @@ function RunAndGatherOutput {
     [UInt32] $totalStdoutLines = 0
     [UInt32] $totalStderrLines = 0
     [UInt32] $previousLineNumber = 0
-    [String] $previousLineText = $null
     while ($true) {
         [UInt32] $lineNumber = $reader.ReadLine()
         if ($lineNumber -eq 0) {
             break
         }
-        [String] $lineText = $reader.ReadLine()
 
         if ($previousLineNumber -gt 0) {
             [PSCustomObject] $lineOutput = `
-                CreateLineOutput $totalStdoutLines $totalStderrLines $previousLineNumber $previousLineText $stdoutFile $stderrFile
+                CreateLineOutput $totalStdoutLines $totalStderrLines $previousLineNumber $stdoutFile $stderrFile
             $totalStdoutLines += (BreakIntoLines $lineOutput.Stdout).Count
             $totalStderrLines += (BreakIntoLines $lineOutput.Stderr).Count
             $lineOutputs += $lineOutput
         }
 
         $previousLineNumber = $lineNumber
-        $previousLineText = $lineText
         $writer.WriteLine('ready')
     }
 
@@ -301,7 +286,7 @@ function RunAndGatherOutput {
 
     # Get the output from the last line.
     $lineOutputs += `
-        CreateLineOutput $totalStdoutLines $totalStderrLines $previousLineNumber $previousLineText $stdoutFile $stderrFile
+        CreateLineOutput $totalStdoutLines $totalStderrLines $previousLineNumber $stdoutFile $stderrFile
 
     [PSCustomObject] $output = NewExampleOutput $Exe.Version $lineOutputs
     return $output
@@ -326,7 +311,7 @@ function InvokeExe {
         foreach ($i in 1..$lines.Count) {
             $breakpointString += `
                 "Set-PSBreakpoint -Script $tempScript -Line $i " +
-                    "-Action { RecordLine $tempScript $i > `$null } > `$null; "
+                    "-Action { RecordLine $i > `$null } > `$null; "
         }
 
         [String] $command = `

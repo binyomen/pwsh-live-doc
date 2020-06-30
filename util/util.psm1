@@ -50,17 +50,14 @@ function RecordLine {
     [OutputType([Void])]
     param(
         [Parameter(Mandatory=$true)]
-        [String] $ScriptPath,
-        [Parameter(Mandatory=$true)]
         [UInt32] $LineNumber
     )
 
     # Powershell version 2 doesn't support passing in the current breakpoint as
-    # $_ to the -Action parameter, so we need to handle this information ourselves.
-    [String] $line = (Get-Content $ScriptPath)[$LineNumber - 1]
+    # $_ to the -Action parameter, so we need to handle passing in the line
+    # number ourselves.
 
     $script:writer.WriteLine($LineNumber)
-    $script:writer.WriteLine($line)
     $script:reader.ReadLine() > $null
 
     $script:currentBreakpointIndex += 1

@@ -237,24 +237,25 @@ function BuildOutputView {
         [PSTypeName('ExampleOutput')]
         [PSCustomObject[]] $Outputs,
         [Parameter(Mandatory)]
-        [UInt32] $NumberOfLines
+        [String] $Code
     )
 
     [String] $html = '<div class="output-view">'
 
-    foreach ($lineNumber in 1..$NumberOfLines) {
+    [String[]] $codeLines = $Code -split "`n"
+    foreach ($lineNumber in 1..$codeLines.Count) {
         [PSCustomObject[]] $outputsForLine = @()
         foreach ($output in $Outputs) {
-            [PSCustomObject] $line = $output.GetLine($lineNumber)
-            if ($null -ne $line) {
-                $outputsForLine += NewExampleOutput $output.Version @($line)
+            [PSCustomObject[]] $lines = $output.GetLines($lineNumber)
+            if ($lines.Count -gt 0) {
+                $outputsForLine += NewExampleOutput $output.Version $lines
             }
         }
 
         if ($outputsForLine.Count -gt 0) {
             [String] $outputTableHtml = GetOutputTableHtml $outputsForLine
             if ($outputTableHtml.Length -gt 0) {
-                [String] $lineText = $Outputs[0].GetLine($LineNumber).LineText
+                [String] $lineText = $codeLines[$lineNumber - 1]
                 $html += GetSingleLineHtml $lineText $lineNumber
                 $html += $outputTableHtml
             }
@@ -285,7 +286,7 @@ function OutputCode {
     [PSCustomObject[]] $outputs = GetOutputs $minVersionSemantic $codeAsString
 
     [String] $codeHtml = BuildCodeHtml $codeAsString
-    [String] $outputView = BuildOutputView $outputs ($codeAsString -split "`n").Count
+    [String] $outputView = BuildOutputView $outputs $codeAsString
     [String] $rawOutputHtml = BuildRawOutputView $outputs
 
     return $codeHtml + $outputView + $rawOutputHtml
