@@ -70,6 +70,33 @@ main {
     overflow: auto;
 }
 
+.code-view ol {
+    list-style-type: none;
+    counter-reset: line-number;
+
+    margin: 0;
+    padding: 0;
+}
+
+.code-view li {
+    line-height: 1.5;
+}
+
+.code-view .line-number::before {
+    counter-increment: line-number;
+    content: counter(line-number) " ";
+
+    display: inline-block;
+    width: 2em;
+    box-sizing: border-box;
+
+    padding-right: 0.2em;
+    margin-right: 0.6em;
+    border-right: 1px solid black;
+
+    text-align: end;
+}
+
 .stream-view-scroll {
     overflow: auto;
 }

@@ -7,11 +7,12 @@ function AddScriptMethod {
         [Parameter(Mandatory)]
         [String] $MethodName,
         [Parameter(Mandatory)]
-        [ScriptBlock] $Definition
+        [ScriptBlock] $Definition,
+        [String] $MemberType = 'ScriptMethod'
     )
 
     Update-TypeData -TypeName $TypeName -MemberName $MethodName `
-        -MemberType ScriptMethod -Value $Definition -Force
+        -MemberType $MemberType -Value $Definition -Force
 }
 
 function GetIndent {
@@ -99,4 +100,16 @@ function GetRest {
     return $List.Count -gt 1 ?
         $List[1..($List.Count - 1)] :
         ,@()
+}
+
+function BreakIntoLines {
+    [CmdletBinding()]
+    [OutputType([String[]])]
+    param(
+        [Parameter(Mandatory)]
+        [AllowEmptyString()]
+        [String] $String
+    )
+
+    return $String.Length -eq 0 ? ,@() : ,($String -split "`n")
 }
