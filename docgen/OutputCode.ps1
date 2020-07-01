@@ -19,6 +19,7 @@ function GroupVersionsByOutput {
     [OutputType([Dictionary[String, SemanticVersion[]]])]
     param(
         [Parameter(Mandatory)]
+        [AllowEmptyCollection()]
         [PSTypeName('ExampleOutput')]
         [PSCustomObject[]] $Outputs,
         [Parameter(Mandatory)]
@@ -51,7 +52,7 @@ function GetOutputs {
 
     [PSCustomObject[]] $exesToTest = GetPowerShellExesToTest $MinVersion
 
-    return $exesToTest | ForEach-Object -ThrottleLimit 8 -Parallel {
+    return $exesToTest | ForEach-Object -ThrottleLimit 1 -Parallel {
         [PSCustomObject] $exe = $_
 
         [PSModuleInfo] $docgen = Import-Module "$using:PSScriptRoot\..\docgen" -Force -PassThru
@@ -143,6 +144,7 @@ function GetOutputTableHtml {
     [OutputType([String])]
     param(
         [Parameter(Mandatory)]
+        [AllowEmptyCollection()]
         [PSTypeName('ExampleOutput')]
         [PSCustomObject[]] $Outputs
     )
@@ -209,16 +211,14 @@ function BuildCodeHtml {
             }
         }
 
-        if ($outputsForLine.Count -gt 0) {
-            [String] $lineText = $codeLines[$lineNumber - 1]
-            [String] $outputTableHtml = GetOutputTableHtml $outputsForLine
-            [String] $lineHtml = GetSingleLineHtml $lineText
-            if ($outputTableHtml.Length -gt 0) {
-                [String] $lineId = (New-Guid).Guid
-                $html += "<li aria-labelledby=`"$lineId`"><details><summary id=`"$lineId`">$lineHtml</summary>$outputTableHtml</details></li>"
-            } else {
-                $html += "<li>$lineHtml</li>"
-            }
+        [String] $lineText = $codeLines[$lineNumber - 1]
+        [String] $outputTableHtml = GetOutputTableHtml $outputsForLine
+        [String] $lineHtml = GetSingleLineHtml $lineText
+        if ($outputTableHtml.Length -gt 0) {
+            [String] $lineId = (New-Guid).Guid
+            $html += "<li aria-labelledby=`"$lineId`"><details><summary id=`"$lineId`">$lineHtml</summary>$outputTableHtml</details></li>"
+        } else {
+            $html += "<li>$lineHtml</li>"
         }
     }
 
