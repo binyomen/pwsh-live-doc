@@ -52,7 +52,7 @@ function GetOutputs {
 
     [PSCustomObject[]] $exesToTest = GetPowerShellExesToTest $MinVersion
 
-    return $exesToTest | ForEach-Object -ThrottleLimit 1 -Parallel {
+    return $exesToTest | ForEach-Object -ThrottleLimit 8 -Parallel {
         [PSCustomObject] $exe = $_
 
         [PSModuleInfo] $docgen = Import-Module "$using:PSScriptRoot\..\docgen" -Force -PassThru

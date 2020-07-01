@@ -160,7 +160,7 @@ AddScriptMethod ExampleOutput Stdout {
             $streamList += $line.Stdout
         }
     }
-    return $streamList -join ''
+    return $streamList -join "`n"
 } ScriptProperty
 
 AddScriptMethod ExampleOutput Stderr {
@@ -174,7 +174,7 @@ AddScriptMethod ExampleOutput Stderr {
             $streamList += $line.Stderr
         }
     }
-    return $streamList -join ''
+    return $streamList -join "`n"
 } ScriptProperty
 
 AddScriptMethod ExampleOutput GetLines {
