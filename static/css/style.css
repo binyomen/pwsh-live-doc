@@ -82,19 +82,58 @@ main {
     line-height: 1.5;
 }
 
+.code-view pre, .code-view code {
+    margin: 0;
+    padding: 0;
+}
+
+.code-view code {
+    padding-left: 0.5em;
+    padding-right: 0.5em;
+}
+
+.code-view li:first-child code {
+    padding-top: 0.5em;
+}
+
+.code-view li:last-child code {
+    padding-bottom: 0.5em;
+}
+
+.code-view summary {
+    list-style-type: none;
+    border-top: 3px outset;
+    border-right: 3px outset;
+    border-bottom: 3px outset;
+    cursor: pointer;
+}
+
 .code-view .line-number::before {
     counter-increment: line-number;
-    content: counter(line-number) " ";
+    content: counter(line-number);
 
     display: inline-block;
     width: 2em;
     box-sizing: border-box;
 
-    padding-right: 0.2em;
+    padding-right: 0.6em;
     margin-right: 0.6em;
     border-right: 1px solid black;
 
     text-align: end;
+}
+
+.raw-output-view {
+    padding-top: 1em;
+    padding-bottom: 1em;
+}
+
+.raw-output-view summary {
+    font-size: 1.2em;
+}
+
+.stream-view {
+    padding: 1em;
 }
 
 .stream-view-scroll {
@@ -128,23 +167,19 @@ main {
     border-top: var(--stream-view-border);
     border-left: var(--stream-view-border);
 
-    --stream-view-padding: 0.7em;
-    padding-left: var(--stream-view-padding);
-    padding-right: var(--stream-view-padding);
-    padding-bottom: var(--stream-view-padding);
+    padding: 0.7em;
 }
 
 .output-view-heading {
-    padding-top: 0.5em;
     padding-bottom: 0.5em;
 }
 
 .stream-view > .output-view-heading {
-    font-size: 1.5em;
+    font-size: 1.4em;
 }
 
 .stream-view-flex-item > .output-view-heading {
-    font-size: 1.3em;
+    font-size: 1.2em;
 }
 
 .output-text {

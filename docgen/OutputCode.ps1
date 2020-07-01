@@ -172,7 +172,7 @@ function BuildRawOutputView {
         [PSCustomObject[]] $Outputs
     )
 
-    [String] $html = '<details><summary>Raw output</summary><div class="raw-output-view">'
+    [String] $html = '<div class="raw-output-view"><details><summary>Raw output</summary>'
 
     [String] $outputTableHtml = GetOutputTableHtml $Outputs
     if ($outputTableHtml.Length -eq 0) {
@@ -181,25 +181,9 @@ function BuildRawOutputView {
         $html += $outputTableHtml
     }
 
-    $html += '</div></details>'
+    $html += '</details></div>'
 
     return $html
-}
-
-function MarkCodeLines {
-    [CmdletBinding()]
-    [OutputType([String])]
-    param(
-        [Parameter(Mandatory)]
-        [String] $Code
-    )
-
-    [String[]] $lines = $Code -split "`n"
-    [String[]] $wrappedLines = $lines | ForEach-Object {
-        "<li><span class=`"line-number`" aria-hidden=`"true`"></span>$_</li>"
-    }
-
-    return $wrappedLines -join ''
 }
 
 function BuildCodeHtml {
@@ -207,40 +191,13 @@ function BuildCodeHtml {
     [OutputType([String])]
     param(
         [Parameter(Mandatory)]
-        [String] $Code
-    )
-
-    [String] $formattedCode = EscapeHtml (FormatPageText $Code)
-    [String] $lined = MarkCodeLines $formattedCode
-    return "<pre class=`"code-view`"><code class=`"powershell`"><ol>$lined</ol></code></pre>"
-}
-
-function GetSingleLineHtml {
-    [CmdletBinding()]
-    [OutputType([String])]
-    param(
-        [Parameter(Mandatory)]
-        [String] $LineText,
-        [Parameter(Mandatory)]
-        [UInt32] $LineNumber
-    )
-
-    [String] $lineHtml = "<span class=`"line-number`" aria-label=`"Line $LineNumber`">$LineNumber</span>$LineText"
-    return "<pre class=`"code-view`"><code class=`"powershell`">$lineHtml</code></pre>"
-}
-
-function BuildOutputView {
-    [CmdletBinding()]
-    [OutputType([String])]
-    param(
+        [String] $Code,
         [Parameter(Mandatory)]
         [PSTypeName('ExampleOutput')]
-        [PSCustomObject[]] $Outputs,
-        [Parameter(Mandatory)]
-        [String] $Code
+        [PSCustomObject[]] $Outputs
     )
 
-    [String] $html = '<div class="output-view">'
+    [String] $html = '<div class="code-view"><ol>'
 
     [String[]] $codeLines = $Code -split "`n"
     foreach ($lineNumber in 1..$codeLines.Count) {
@@ -253,18 +210,36 @@ function BuildOutputView {
         }
 
         if ($outputsForLine.Count -gt 0) {
+            [String] $lineText = $codeLines[$lineNumber - 1]
             [String] $outputTableHtml = GetOutputTableHtml $outputsForLine
+            [String] $lineHtml = GetSingleLineHtml $lineText
             if ($outputTableHtml.Length -gt 0) {
-                [String] $lineText = $codeLines[$lineNumber - 1]
-                $html += GetSingleLineHtml $lineText $lineNumber
-                $html += $outputTableHtml
+                [String] $lineId = (New-Guid).Guid
+                $html += "<li aria-labelledby=`"$lineId`"><details><summary id=`"$lineId`">$lineHtml</summary>$outputTableHtml</details></li>"
+            } else {
+                $html += "<li>$lineHtml</li>"
             }
         }
     }
 
-    $html += '</div>'
+    $html += '</ol></div>'
 
     return $html
+}
+
+function GetSingleLineHtml {
+    [CmdletBinding()]
+    [OutputType([String])]
+    param(
+        [Parameter(Mandatory)]
+        [AllowEmptyString()]
+        [String] $LineText
+    )
+
+    return `
+        "<pre><code class=`"powershell`">" +
+            "<span class=`"line-number`" aria-hidden=`"true`"></span>$LineText" +
+        "</code></pre>"
 }
 
 function OutputCode {
@@ -285,9 +260,8 @@ function OutputCode {
     [String] $codeAsString = FormatPageText $Code.ToString()
     [PSCustomObject[]] $outputs = GetOutputs $minVersionSemantic $codeAsString
 
-    [String] $codeHtml = BuildCodeHtml $codeAsString
-    [String] $outputView = BuildOutputView $outputs $codeAsString
+    [String] $codeHtml = BuildCodeHtml (EscapeHtml $codeAsString) $outputs
     [String] $rawOutputHtml = BuildRawOutputView $outputs
 
-    return $codeHtml + $outputView + $rawOutputHtml
+    return $codeHtml + $rawOutputHtml
 }
