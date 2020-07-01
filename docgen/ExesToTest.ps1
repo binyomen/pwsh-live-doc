@@ -223,8 +223,8 @@ function CreateLineOutput {
     )
 
     # Sometimes with PowerShell v2 there's a BOM at the beginning of the output string.
-    [String[]] $stdout = BreakIntoLines (RemoveBom (Get-Content -Raw $StdoutFile))
-    [String[]] $stderr = BreakIntoLines (RemoveBom (Get-Content -Raw $StderrFile))
+    [String[]] $stdout = BreakIntoLines (FixNewLines (RemoveBom (Get-Content -Raw $StdoutFile)))
+    [String[]] $stderr = BreakIntoLines (FixNewLines (RemoveBom (Get-Content -Raw $StderrFile)))
 
     [String] $newStdout = (TakeSuffix $CurrentStdoutLines $stdout) -join "`n"
     [String] $newStderr = (TakeSuffix $CurrentStderrLines $stderr) -join "`n"
