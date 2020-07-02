@@ -1,3 +1,6 @@
+[String] $script:startsLineMarker = '{{START]]'
+[String] $script:endsLineMarker = '{{END]]'
+
 function RunPowerShellExe {
     [CmdletBinding()]
     [OutputType([PSCustomObject])]
@@ -23,21 +26,36 @@ function GroupVersionsByOutput {
         [PSTypeName('ExampleOutput')]
         [PSCustomObject[]] $Outputs,
         [Parameter(Mandatory)]
-        [ScriptBlock] $StreamGetter
+        [ScriptBlock] $ContentGetter,
+        [Parameter(Mandatory)]
+        [ScriptBlock] $StartsLineGetter,
+        [Parameter(Mandatory)]
+        [ScriptBlock] $EndsLineGetter
     )
 
-    [Dictionary[String, SemanticVersion[]]] $streamMap = [Dictionary[String, SemanticVersion[]]]::new()
+    [Dictionary[String, SemanticVersion[]]] $outputMap = [Dictionary[String, SemanticVersion[]]]::new()
     foreach ($output in $Outputs) {
-        [String] $streamString = & $StreamGetter $output
+        [String] $outputContent = & $ContentGetter $output
+        [Boolean] $startsLine = & $StartsLineGetter $output
+        [Boolean] $endsLine = & $EndsLineGetter $output
 
-        if (-not $streamMap.ContainsKey($streamString)) {
-            $streamMap[$streamString] = @()
+        [String] $key = ''
+        if ($startsLine -and ($outputContent.Length -gt 0)) {
+            $key += $script:startsLineMarker
+        }
+        $key += $outputContent
+        if ($endsLine -and ($outputContent.Length -gt 0)) {
+            $key += $script:endsLineMarker
         }
 
-        $streamMap[$streamString] += $output.Version
+        if (-not $outputMap.ContainsKey($key)) {
+            $outputMap[$key] = @()
+        }
+
+        $outputMap[$key] += $output.Version
     }
 
-    return $streamMap
+    return $outputMap
 }
 
 function GetOutputs {
@@ -70,7 +88,24 @@ function FormatOutputStream {
         [String] $StreamString
     )
 
-    return "<pre class=`"output-text`">$(EscapeHtml $StreamString)</pre>"
+    [String] $content = $StreamString
+
+    [String] $prefix = '[does not start line] '
+    if ($content.StartsWith($script:startsLineMarker)) {
+        $prefix = ''
+        $content = $content.Substring($script:startsLineMarker.Length)
+    }
+
+    [String] $suffix = ' [does not end line]'
+    if ($content.EndsWith($script:endsLineMarker)) {
+        $suffix = ''
+        [UInt32] $finalLength = $content.Length - $script:endsLineMarker.Length
+        $content = $content.Substring(0, $finalLength)
+    }
+
+    $content = "$prefix$content$suffix"
+
+    return "<pre class=`"output-text`">$(EscapeHtml $content)</pre>"
 }
 
 function HasOutput {
@@ -151,8 +186,10 @@ function GetOutputTableHtml {
 
     # Create maps of stdout/stderr strings to list of versions. This lets us
     # group versions by what their output is.
-    [Dictionary[String, SemanticVersion[]]] $stdoutMap = GroupVersionsByOutput $Outputs { $args[0].Stdout }
-    [Dictionary[String, SemanticVersion[]]] $stderrMap = GroupVersionsByOutput $Outputs { $args[0].Stderr }
+    [Dictionary[String, SemanticVersion[]]] $stdoutMap = `
+        GroupVersionsByOutput $Outputs { $args[0].Stdout } { $args[0].StdoutStartsLine } { $args[0].StdoutEndsLine }
+    [Dictionary[String, SemanticVersion[]]] $stderrMap = `
+        GroupVersionsByOutput $Outputs { $args[0].Stderr } { $args[0].StderrStartsLine } { $args[0].StderrEndsLine }
 
     [SemanticVersion[]] $allVersions = $outputs | ForEach-Object { $_.Version }
 

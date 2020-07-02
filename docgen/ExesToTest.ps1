@@ -128,6 +128,10 @@ function NewLineOutput {
         LineNumber = $LineNumber
         Stdout = $Stdout
         Stderr = $Stderr
+        StdoutStartsLine = $true
+        StderrStartsLine = $true
+        StdoutEndsLine = $true
+        StderrEndsLine = $true
     }
 }
 
@@ -160,7 +164,7 @@ AddScriptMethod ExampleOutput Stdout {
             $streamList += $line.Stdout
         }
     }
-    return $streamList -join "`n"
+    return $streamList -join ''
 } ScriptProperty
 
 AddScriptMethod ExampleOutput Stderr {
@@ -174,7 +178,61 @@ AddScriptMethod ExampleOutput Stderr {
             $streamList += $line.Stderr
         }
     }
-    return $streamList -join "`n"
+    return $streamList -join ''
+} ScriptProperty
+
+AddScriptMethod ExampleOutput StdoutStartsLine {
+    [CmdletBinding()]
+    [OutputType([Boolean])]
+    param()
+
+    foreach ($line in $this.Lines) {
+        if ($line.Stdout.Length -gt 0) {
+            return $line.StdoutStartsLine
+        }
+    }
+    return $false
+} ScriptProperty
+
+AddScriptMethod ExampleOutput StderrStartsLine {
+    [CmdletBinding()]
+    [OutputType([Boolean])]
+    param()
+
+    foreach ($line in $this.Lines) {
+        if ($line.Stderr.Length -gt 0) {
+            return $line.StderrStartsLine
+        }
+    }
+    return $false
+} ScriptProperty
+
+AddScriptMethod ExampleOutput StdoutEndsLine {
+    [CmdletBinding()]
+    [OutputType([Boolean])]
+    param()
+
+    [Boolean] $stdoutEndsLine = $true
+    foreach ($line in $this.Lines) {
+        if ($line.Stdout.Length -gt 0) {
+            $stdoutEndsLine = $line.StdoutEndsLine
+        }
+    }
+    return $stdoutEndsLine
+} ScriptProperty
+
+AddScriptMethod ExampleOutput StderrEndsLine {
+    [CmdletBinding()]
+    [OutputType([Boolean])]
+    param()
+
+    [Boolean] $stderrEndsLine = $true
+    foreach ($line in $this.Lines) {
+        if ($line.Stderr.Length -gt 0) {
+            $stderrEndsLine = $line.StderrEndsLine
+        }
+    }
+    return $stderrEndsLine
 } ScriptProperty
 
 AddScriptMethod ExampleOutput GetLines {
@@ -188,22 +246,57 @@ AddScriptMethod ExampleOutput GetLines {
     return ,@($this.Lines | Where-Object { $_.LineNumber -eq $LineNumber })
 }
 
-function TakeSuffix {
+function RemovePrefix {
     [CmdletBinding()]
-    [OutputType([Object[]])]
+    [OutputType([String])]
     param(
         [Parameter(Mandatory)]
         [UInt32] $PrefixLength,
         [Parameter(Mandatory)]
-        [AllowEmptyCollection()]
-        [Object[]] $List
+        [AllowEmptyString()]
+        [String] $String
     )
 
-    if (($List.Count -eq 0) -or ($PrefixLength -eq $List.Count)) {
-        return ,@()
+    if (($String.Length -eq 0) -or ($PrefixLength -eq $String.Length)) {
+        return ''
     } else {
-        return $List[$PrefixLength..($List.Count - 1)]
+        return $String[$PrefixLength..($String.Length - 1)] -join ''
     }
+}
+
+function StartsLine {
+    [CmdletBinding()]
+    [OutputType([Boolean])]
+    param(
+        [Parameter(Mandatory)]
+        [AllowEmptyString()]
+        [String] $AllOutput,
+        [Parameter(Mandatory)]
+        [UInt32] $CurrentChars,
+        [Parameter(Mandatory)]
+        [AllowEmptyString()]
+        [String] $NewOutput
+    )
+
+    if (($AllOutput.Length -eq 0) -or ($NewOutput.Length -eq 0)) {
+        return $false
+    } elseif ($CurrentChars -eq 0) {
+        return $true
+    } else {
+        return $AllOutput[$CurrentChars - 1] -eq "`n"
+    }
+}
+
+function EndsLine {
+    [CmdletBinding()]
+    [OutputType([Boolean])]
+    param(
+        [Parameter(Mandatory)]
+        [AllowEmptyString()]
+        [String] $NewOutput
+    )
+
+    return ($NewOutput.Length -gt 0) -and ($NewOutput[-1] -eq "`n")
 }
 
 function CreateLineOutput {
@@ -211,9 +304,9 @@ function CreateLineOutput {
     [OutputType([PSCustomObject])]
     param(
         [Parameter(Mandatory)]
-        [UInt32] $CurrentStdoutLines,
+        [UInt32] $CurrentStdoutChars,
         [Parameter(Mandatory)]
-        [UInt32] $CurrentStderrLines,
+        [UInt32] $CurrentStderrChars,
         [Parameter(Mandatory)]
         [UInt32] $LineNumber,
         [Parameter(Mandatory)]
@@ -223,13 +316,27 @@ function CreateLineOutput {
     )
 
     # Sometimes with PowerShell v2 there's a BOM at the beginning of the output string.
-    [String[]] $stdout = BreakIntoLines (FixNewLines (RemoveBom (Get-Content -Raw $StdoutFile)))
-    [String[]] $stderr = BreakIntoLines (FixNewLines (RemoveBom (Get-Content -Raw $StderrFile)))
+    [String] $stdout = FixNewLines (RemoveBom (Get-Content -Raw $StdoutFile))
+    [String] $stderr = FixNewLines (RemoveBom (Get-Content -Raw $StderrFile))
 
-    [String] $newStdout = (TakeSuffix $CurrentStdoutLines $stdout) -join "`n"
-    [String] $newStderr = (TakeSuffix $CurrentStderrLines $stderr) -join "`n"
+    [String] $newStdout = (RemovePrefix $CurrentStdoutChars $stdout)
+    [String] $newStderr = (RemovePrefix $CurrentStderrChars $stderr)
 
-    return NewLineOutput $LineNumber $newStdout $newStderr
+    [PSCustomObject] $line = NewLineOutput $LineNumber $newStdout $newStderr
+    if (-not (StartsLine $stdout $CurrentStdoutChars $line.Stdout)) {
+        $line.StdoutStartsLine = $false
+    }
+    if (-not (StartsLine $stderr $CurrentStderrChars $line.Stderr)) {
+        $line.StderrStartsLine = $false
+    }
+    if (-not (EndsLine $line.Stdout)) {
+        $line.StdoutEndsLine = $false
+    }
+    if (-not (EndsLine $line.Stderr)) {
+        $line.StderrEndsLine = $false
+    }
+
+    return $line
 }
 
 function RunAndGatherOutput {
@@ -261,8 +368,8 @@ function RunAndGatherOutput {
 
     [PSCustomObject[]] $lineOutputs = @()
 
-    [UInt32] $totalStdoutLines = 0
-    [UInt32] $totalStderrLines = 0
+    [UInt32] $totalStdoutChars = 0
+    [UInt32] $totalStderrChars = 0
     [UInt32] $previousLineNumber = 0
     while ($true) {
         [UInt32] $lineNumber = $reader.ReadLine()
@@ -272,9 +379,9 @@ function RunAndGatherOutput {
 
         if ($previousLineNumber -gt 0) {
             [PSCustomObject] $lineOutput = `
-                CreateLineOutput $totalStdoutLines $totalStderrLines $previousLineNumber $stdoutFile $stderrFile
-            $totalStdoutLines += (BreakIntoLines $lineOutput.Stdout).Count
-            $totalStderrLines += (BreakIntoLines $lineOutput.Stderr).Count
+                CreateLineOutput $totalStdoutChars $totalStderrChars $previousLineNumber $stdoutFile $stderrFile
+            $totalStdoutChars += $lineOutput.Stdout.Length
+            $totalStderrChars += $lineOutput.Stderr.Length
             $lineOutputs += $lineOutput
         }
 
@@ -286,9 +393,15 @@ function RunAndGatherOutput {
 
     # Get the output from the last line.
     $lineOutputs += `
-        CreateLineOutput $totalStdoutLines $totalStderrLines $previousLineNumber $stdoutFile $stderrFile
+        CreateLineOutput $totalStdoutChars $totalStderrChars $previousLineNumber $stdoutFile $stderrFile
 
     [PSCustomObject] $output = NewExampleOutput $Exe.Version $lineOutputs
+    [String] $stdout = FixNewLines (RemoveBom (Get-Content -Raw $StdoutFile))
+    [String] $stderr = FixNewLines (RemoveBom (Get-Content -Raw $StderrFile))
+    if (($output.Stdout -ne $stdout) -or ($output.Stderr -ne $stderr)) {
+        throw 'Did not properly collect stdio'
+    }
+
     return $output
 }
 

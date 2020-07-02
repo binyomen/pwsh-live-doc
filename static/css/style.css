@@ -76,6 +76,7 @@ main {
 
     margin: 0;
     padding: 0;
+    width: min-content;
 }
 
 .code-view li {
@@ -90,6 +91,8 @@ main {
 .code-view code {
     padding-left: 0.5em;
     padding-right: 0.5em;
+    /* Override the highlightjs styling. */
+    overflow: visible;
 }
 
 .code-view li:first-child code {
