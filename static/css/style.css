@@ -173,6 +173,12 @@ main {
     padding: 0.7em;
 }
 
+.stream-view-flex-item aside {
+    font-style: italic;
+    padding-top: 0.2em;
+    padding-bottom: 0.2em;
+}
+
 .output-view-heading {
     padding-bottom: 0.5em;
 }

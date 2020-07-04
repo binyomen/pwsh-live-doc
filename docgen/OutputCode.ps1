@@ -1,5 +1,5 @@
-[String] $script:startsLineMarker = '{{START]]'
-[String] $script:endsLineMarker = '{{END]]'
+[String] $script:startsLineMarker = '{{START}}'
+[String] $script:endsLineMarker = '{{END}}'
 
 function RunPowerShellExe {
     [CmdletBinding()]
@@ -90,22 +90,20 @@ function FormatOutputStream {
 
     [String] $content = $StreamString
 
-    [String] $prefix = '[does not start line] '
+    [String] $prefix = '<aside>[does not start line]</aside>'
     if ($content.StartsWith($script:startsLineMarker)) {
         $prefix = ''
         $content = $content.Substring($script:startsLineMarker.Length)
     }
 
-    [String] $suffix = ' [does not end line]'
+    [String] $suffix = '<aside>[does not end line]</aside>'
     if ($content.EndsWith($script:endsLineMarker)) {
         $suffix = ''
         [UInt32] $finalLength = $content.Length - $script:endsLineMarker.Length
         $content = $content.Substring(0, $finalLength)
     }
 
-    $content = "$prefix$content$suffix"
-
-    return "<pre class=`"output-text`">$(EscapeHtml $content)</pre>"
+    return "$prefix<pre class=`"output-text`">$(EscapeHtml $content)</pre>$suffix"
 }
 
 function HasOutput {
