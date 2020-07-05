@@ -105,9 +105,11 @@ main {
 
 .code-view summary {
     list-style-type: none;
-    border-top: 3px outset;
-    border-right: 3px outset;
-    border-bottom: 3px outset;
+}
+
+.code-view summary > img {
+    width: 1em;
+    position: absolute;
     cursor: pointer;
 }
 

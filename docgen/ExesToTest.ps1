@@ -128,10 +128,10 @@ function NewLineOutput {
         LineNumber = $LineNumber
         Stdout = $Stdout
         Stderr = $Stderr
-        StdoutStartsLine = $true
-        StderrStartsLine = $true
-        StdoutEndsLine = $true
-        StderrEndsLine = $true
+        StdoutStartsLine = $false
+        StderrStartsLine = $false
+        StdoutEndsLine = $false
+        StderrEndsLine = $false
     }
 }
 
@@ -212,7 +212,7 @@ AddScriptMethod ExampleOutput StdoutEndsLine {
     [OutputType([Boolean])]
     param()
 
-    [Boolean] $stdoutEndsLine = $true
+    [Boolean] $stdoutEndsLine = $false
     foreach ($line in $this.Lines) {
         if ($line.Stdout.Length -gt 0) {
             $stdoutEndsLine = $line.StdoutEndsLine
@@ -226,7 +226,7 @@ AddScriptMethod ExampleOutput StderrEndsLine {
     [OutputType([Boolean])]
     param()
 
-    [Boolean] $stderrEndsLine = $true
+    [Boolean] $stderrEndsLine = $false
     foreach ($line in $this.Lines) {
         if ($line.Stderr.Length -gt 0) {
             $stderrEndsLine = $line.StderrEndsLine
@@ -323,17 +323,17 @@ function CreateLineOutput {
     [String] $newStderr = (RemovePrefix $CurrentStderrChars $stderr)
 
     [PSCustomObject] $line = NewLineOutput $LineNumber $newStdout $newStderr
-    if (-not (StartsLine $stdout $CurrentStdoutChars $line.Stdout)) {
-        $line.StdoutStartsLine = $false
+    if (StartsLine $stdout $CurrentStdoutChars $line.Stdout) {
+        $line.StdoutStartsLine = $true
     }
-    if (-not (StartsLine $stderr $CurrentStderrChars $line.Stderr)) {
-        $line.StderrStartsLine = $false
+    if (StartsLine $stderr $CurrentStderrChars $line.Stderr) {
+        $line.StderrStartsLine = $true
     }
-    if (-not (EndsLine $line.Stdout)) {
-        $line.StdoutEndsLine = $false
+    if (EndsLine $line.Stdout) {
+        $line.StdoutEndsLine = $true
     }
-    if (-not (EndsLine $line.Stderr)) {
-        $line.StderrEndsLine = $false
+    if (EndsLine $line.Stderr) {
+        $line.StderrEndsLine = $true
     }
 
     return $line

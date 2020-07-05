@@ -40,11 +40,11 @@ function GroupVersionsByOutput {
         [Boolean] $endsLine = & $EndsLineGetter $output
 
         [String] $key = ''
-        if ($startsLine -and ($outputContent.Length -gt 0)) {
+        if ($startsLine) {
             $key += $script:startsLineMarker
         }
         $key += $outputContent
-        if ($endsLine -and ($outputContent.Length -gt 0)) {
+        if ($endsLine) {
             $key += $script:endsLineMarker
         }
 
@@ -88,22 +88,26 @@ function FormatOutputStream {
         [String] $StreamString
     )
 
-    [String] $content = $StreamString
+    if ($StreamString.Length -gt 0) {
+        [String] $content = $StreamString
 
-    [String] $prefix = '<aside>[does not start line]</aside>'
-    if ($content.StartsWith($script:startsLineMarker)) {
-        $prefix = ''
-        $content = $content.Substring($script:startsLineMarker.Length)
+        [String] $prefix = '<aside>[does not start line]</aside>'
+        if ($content.StartsWith($script:startsLineMarker)) {
+            $prefix = ''
+            $content = $content.Substring($script:startsLineMarker.Length)
+        }
+
+        [String] $suffix = '<aside>[does not end line]</aside>'
+        if ($content.EndsWith($script:endsLineMarker)) {
+            $suffix = ''
+            [UInt32] $finalLength = $content.Length - $script:endsLineMarker.Length
+            $content = $content.Substring(0, $finalLength)
+        }
+
+        return "$prefix<pre class=`"output-text`">$(EscapeHtml $content)</pre>$suffix"
+    } else {
+        return '<p>no output</p>'
     }
-
-    [String] $suffix = '<aside>[does not end line]</aside>'
-    if ($content.EndsWith($script:endsLineMarker)) {
-        $suffix = ''
-        [UInt32] $finalLength = $content.Length - $script:endsLineMarker.Length
-        $content = $content.Substring(0, $finalLength)
-    }
-
-    return "$prefix<pre class=`"output-text`">$(EscapeHtml $content)</pre>$suffix"
 }
 
 function HasOutput {
@@ -251,7 +255,8 @@ function BuildCodeHtml {
         [String] $lineHtml = GetSingleLineHtml $lineText
         if ($outputTableHtml.Length -gt 0) {
             [String] $lineId = (New-Guid).Guid
-            $html += "<li aria-labelledby=`"$lineId`"><details><summary id=`"$lineId`">$lineHtml</summary>$outputTableHtml</details></li>"
+            [String] $expandIcon = '<img src="/img/expand.svg" alt="expand icon">'
+            $html += "<li aria-labelledby=`"$lineId`"><details><summary id=`"$lineId`">$expandIcon$lineHtml</summary>$outputTableHtml</details></li>"
         } else {
             $html += "<li>$lineHtml</li>"
         }
