@@ -76,12 +76,17 @@ main {
 
     margin: 0;
     padding: 0;
-    width: min-content;
 }
 
 .code-view li {
     line-height: 1.5;
 }
+
+.line-grid {
+    display: grid;
+    grid-template-columns: 1em 1fr;
+}
+
 
 .code-view pre, .code-view code {
     margin: 0;
@@ -109,7 +114,6 @@ main {
 
 .code-view summary > img {
     width: 1em;
-    position: absolute;
     cursor: pointer;
 }
 
@@ -138,7 +142,7 @@ main {
 }
 
 .stream-view {
-    padding: 1em;
+    padding: 0.7em;
 }
 
 .stream-view-scroll {
@@ -182,7 +186,7 @@ main {
 }
 
 .output-view-heading {
-    padding-bottom: 0.5em;
+    padding-bottom: 0.2em;
 }
 
 .stream-view > .output-view-heading {

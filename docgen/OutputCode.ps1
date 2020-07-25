@@ -104,9 +104,9 @@ function FormatOutputStream {
             $content = $content.Substring(0, $finalLength)
         }
 
-        return "$prefix<pre class=`"output-text`">$(EscapeHtml $content)</pre>$suffix"
+        return "$prefix<pre class=`"output-text`"><samp>$(EscapeHtml $content)</samp></pre>$suffix"
     } else {
-        return '<p>no output</p>'
+        return '<p>No output</p>'
     }
 }
 
@@ -256,9 +256,9 @@ function BuildCodeHtml {
         if ($outputTableHtml.Length -gt 0) {
             [String] $lineId = (New-Guid).Guid
             [String] $expandIcon = '<img src="/img/expand.svg" alt="expand icon">'
-            $html += "<li aria-labelledby=`"$lineId`"><details><summary id=`"$lineId`">$expandIcon$lineHtml</summary>$outputTableHtml</details></li>"
+            $html += "<li aria-labelledby=`"$lineId`"><details><summary id=`"$lineId`" class=`"line-grid`">$expandIcon$lineHtml</summary>$outputTableHtml</details></li>"
         } else {
-            $html += "<li>$lineHtml</li>"
+            $html += "<li class=`"line-grid`"><span></span>$lineHtml</li>"
         }
     }
 
