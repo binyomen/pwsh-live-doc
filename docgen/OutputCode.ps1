@@ -255,7 +255,7 @@ function BuildCodeHtml {
         [String] $lineHtml = GetSingleLineHtml $lineText
         if ($outputTableHtml.Length -gt 0) {
             [String] $lineId = (New-Guid).Guid
-            [String] $expandIcon = '<img src="/img/expand.svg" alt="expand icon">'
+            [String] $expandIcon = '<div aria-label="expand icon"></div>'
             $html += "<li aria-labelledby=`"$lineId`"><details><summary id=`"$lineId`" class=`"line-grid`">$expandIcon$lineHtml</summary>$outputTableHtml</details></li>"
         } else {
             $html += "<li class=`"line-grid`"><span></span>$lineHtml</li>"

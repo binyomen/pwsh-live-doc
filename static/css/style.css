@@ -73,6 +73,7 @@ main {
 .code-view ol {
     list-style-type: none;
     counter-reset: line-number;
+    width: min-content;
 
     margin: 0;
     padding: 0;
@@ -100,21 +101,24 @@ main {
     overflow: visible;
 }
 
-.code-view li:first-child code {
-    padding-top: 0.5em;
-}
-
-.code-view li:last-child code {
-    padding-bottom: 0.5em;
-}
-
 .code-view summary {
     list-style-type: none;
 }
 
-.code-view summary > img {
-    width: 1em;
+.code-view summary > div {
+    width: 0.6em;
+    height: 0.6em;
+    place-self: center;
+
+    background: url('/img/expand.svg');
+    background-size: 100%;
+
     cursor: pointer;
+}
+
+.code-view details[open] summary > div {
+    background: url('/img/collapse.svg');
+    background-size: 100%;
 }
 
 .code-view .line-number::before {
