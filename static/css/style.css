@@ -101,6 +101,10 @@ main {
     list-style-type: none;
 }
 
+.code-view summary::-webkit-details-marker {
+    display: none;
+}
+
 .code-view summary > div {
     width: 0.6em;
     height: 0.6em;
