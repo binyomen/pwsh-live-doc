@@ -73,6 +73,7 @@ function initializeTab(tab) {
     }
 
     tab.addEventListener('click', () => selectTab(tab));
+    tab.addEventListener('focus', () => selectTab(tab));
     tab.addEventListener('keydown', e => {
         if (e.defaultPrevented) {
             return;
