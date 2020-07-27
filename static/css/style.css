@@ -1,7 +1,3 @@
-:root {
-    --stream-view-border: 2px solid black;
-}
-
 body {
     font-size: large;
     max-width: 100%;
@@ -149,62 +145,75 @@ main {
     padding: 0.7em;
 }
 
-.stream-view-scroll {
+.stream-view [role="tablist"] {
+    display: flex;
+    background: black;
+}
+
+.stream-view [role="tablist"].tablist-hidden {
+    display: none;
+}
+
+
+.stream-view [role="tab"] {
+    display: block;
+
+    padding-top: 0.2em;
+    padding-bottom: 0.2em;
+    padding-left: 2em;
+    padding-right: 2em;
+
+    border: none;
+    outline: none;
+
+    font-size: 0.9em;
+    background: black;
+    color: white;
+}
+
+.stream-view [role="tab"]:hover, .stream-view [role="tab"]:focus {
+    background: cornflowerblue;
+}
+
+.stream-view [role="tab"][aria-selected="true"]:not(:focus) {
+    background: #f0f0f0;
+    color: black;
+}
+
+.tabpanel-container.tabpanel-overlaps {
+    background: #f0f0f0;
+}
+
+.stream-view [role="tabpanel"] {
+    background: #f0f0f0;
+    border-radius: 0.5em;
+    margin-bottom: 0.7em;
     overflow: auto;
 }
 
-/* This element is flex container for the stream outputs. It needs to be a
- * child of the scrollable element so that all flex children will have the full
- * width of the scrolled content. Without this, output text backgrounds
- * wouldn't all reach to the end of the view.
- *
- * `width` is `min-content` so that its width extends further than the
- * unscrolled parent. `min-width` is `100%` so that if the content is smaller
- * than the width of the parent, we still expand to fill the parent. */
-.stream-view-scroll > div {
-    display: flex;
-    flex-wrap: wrap;
-
-    width: min-content;
-    min-width: 100%;
-
-    box-sizing: border-box;
-    border-bottom: var(--stream-view-border);
-    border-right: var(--stream-view-border);
+.stream-view [role="tabpanel"].tabpanel-inactive {
+    display: none;
 }
 
-.stream-view-flex-item {
-    flex: 1;
-
-    box-sizing: border-box;
-    border-top: var(--stream-view-border);
-    border-left: var(--stream-view-border);
-
-    padding: 0.7em;
-}
-
-.stream-view-flex-item aside {
+.stream-view [role="tabpanel"] aside {
     font-style: italic;
     padding-top: 0.2em;
     padding-bottom: 0.2em;
 }
 
-.output-view-heading {
-    padding-bottom: 0.2em;
+.stream-view .output-text {
+    padding: 0.5em;
+    margin: 0;
 }
 
-.stream-view > .output-view-heading {
+.output-view-heading {
+    padding-bottom: 0.2em;
     font-size: 1.4em;
 }
 
-.stream-view-flex-item > .output-view-heading {
+.stream-view noscript > div {
+    padding-bottom: 0.2em;
     font-size: 1.2em;
-}
-
-.output-text {
-    background: #f0f0f0;
-    padding: 0.5em;
-    margin: 0;
 }
 
 #page-nav {

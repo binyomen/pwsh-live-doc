@@ -204,6 +204,7 @@ function BuildPageHtml {
             <meta name="viewport" content="width=device-width, initial-scale=1">
             <title>$Title</title>
             <link rel="stylesheet" type="text/css" href="/css/style.css">
+            <script src="/js/script.js" type="module"></script>
             $(if ($IncludeHighlightDeps) {
                 '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.0.0/styles/magula.min.css">
                 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.0.3/highlight.min.js"></script>

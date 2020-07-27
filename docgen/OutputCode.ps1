@@ -128,10 +128,14 @@ function GetStreamViewHtml {
     param(
         [Parameter(Mandatory)]
         [SemanticVersion[]] $AllVersions,
+
         [Parameter(Mandatory)]
         [Dictionary[String, SemanticVersion[]]] $StreamMap,
+
         [Parameter(Mandatory)]
-        [String] $StreamName
+        [String] $StreamName,
+
+        [Switch] $KeepEmptyOutputs
     )
 
     if (-not (HasOutput $StreamMap)) {
@@ -149,27 +153,31 @@ function GetStreamViewHtml {
     [String[]] $sortedKeys = $generalizedMap.Keys | `
         Sort-Object @{ Expression = { $generalizedMap[$_] } }
 
-    [String[]] $versionSections = @()
+    [String] $tablist = '<div role="tablist" class="tablist-hidden">'
+    [String] $tabpanels = ''
     foreach ($streamString in $sortedKeys) {
+        if ($KeepEmptyOutputs -or ($streamString.Length -gt 0)) {
+            [String] $tabId = (New-Guid).Guid
             [String] $versionString = $generalizedMap[$streamString]
-            [String] $versionGroupId = (New-Guid).Guid
-            $versionSections += @"
-                <div class=`"stream-view-flex-item`">
-                    <div class=`"output-view-heading`" id=`"$versionGroupId`">$versionString</div>
-                    <div aria-labelledby=`"$versionGroupId`">
-                        $(FormatOutputStream $streamString)
-                    </div>
-                </div>
-"@
+
+            [String] $tabpanelId = (New-Guid).Guid
+            [String] $formattedStream = FormatOutputStream $streamString
+            [String] $noScriptHeading = "<noscript><div aria-hidden=`"true`">$versionString</div></noscript>"
+
+            $tablist += "<button id=`"$tabId`" role=`"tab`" aria-controls=`"$tabpanelId`">$versionString</button>"
+            $tabpanels += "$noScriptHeading<div id=`"$tabpanelId`" role=`"tabpanel`" tabindex=`"0`" aria-labelledby=`"$tabId`">$formattedStream</div>"
+        }
     }
+    $tablist += '</div>'
 
     [String] $streamId = (New-Guid).Guid
     return @"
         <div class=`"stream-view`">
             <div class =`"output-view-heading`" id=`"$streamId`">$StreamName</div>
-            <div class=`"stream-view-scroll`" aria-labelledby=`"$streamId`">
-                <div>
-                    $versionSections
+            <div aria-labelledby=`"$streamId`">
+                $tablist
+                <div class=`"tabpanel-container`">
+                    $tabpanels
                 </div>
             </div>
         </div>
@@ -183,7 +191,9 @@ function GetOutputTableHtml {
         [Parameter(Mandatory)]
         [AllowEmptyCollection()]
         [PSTypeName('ExampleOutput')]
-        [PSCustomObject[]] $Outputs
+        [PSCustomObject[]] $Outputs,
+
+        [Switch] $KeepEmptyOutputs
     )
 
     # Create maps of stdout/stderr strings to list of versions. This lets us
@@ -198,8 +208,8 @@ function GetOutputTableHtml {
     if ((-not (HasOutput $stdoutMap)) -and (-not (HasOutput $stderrMap))) {
         return ''
     } else {
-        [String] $stdoutView = GetStreamViewHtml $allVersions $stdoutMap 'Stdout'
-        [String] $stderrView = GetStreamViewHtml $allVersions $stderrMap 'Stderr'
+        [String] $stdoutView = GetStreamViewHtml $allVersions $stdoutMap 'Stdout' -KeepEmptyOutputs:$KeepEmptyOutputs
+        [String] $stderrView = GetStreamViewHtml $allVersions $stderrMap 'Stderr' -KeepEmptyOutputs:$KeepEmptyOutputs
         return $stdoutView + $stderrView
     }
 }
@@ -215,7 +225,7 @@ function BuildRawOutputView {
 
     [String] $html = '<div class="raw-output-view"><details><summary>Raw output</summary>'
 
-    [String] $outputTableHtml = GetOutputTableHtml $Outputs
+    [String] $outputTableHtml = GetOutputTableHtml $Outputs -KeepEmptyOutputs
     if ($outputTableHtml.Length -eq 0) {
         $html += '<p>No output</p>'
     } else {
