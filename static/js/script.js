@@ -90,8 +90,8 @@ function initializeTab(tab) {
     });
 }
 
-function initializeTabs(details) {
-    const tabs = details.querySelectorAll('[role="tab"]');
+function initializeTabs() {
+    const tabs = document.querySelectorAll('[role="tab"]');
     tabs.forEach(initializeTab);
 }
 
@@ -116,18 +116,12 @@ function initializeTabpanelContainer(container) {
     container.classList.add('tabpanel-overlaps');
 }
 
-function initializeTabpanelContainers(details) {
-    const containers = details.querySelectorAll('.tabpanel-container');
+function initializeTabpanelContainers() {
+    const containers = document.querySelectorAll('.tabpanel-container');
     containers.forEach(initializeTabpanelContainer);
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    const detailsElements = document.querySelectorAll('.code-view details, .raw-output-view details');
-    detailsElements.forEach(details => {
-        details.addEventListener('toggle', () => {
-            initializeTabpanelContainers(details);
-            initializeTabs(details);
-        },
-        { once: true });
-    });
+    initializeTabpanelContainers();
+    initializeTabs();
 });

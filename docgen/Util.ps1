@@ -113,25 +113,3 @@ function GetRest {
         $List[1..($List.Count - 1)] :
         ,@()
 }
-
-# Get rid of this????????
-function BreakIntoLines {
-    [CmdletBinding()]
-    [OutputType([String[]])]
-    param(
-        [Parameter(Mandatory)]
-        [AllowEmptyString()]
-        [String] $String
-    )
-
-    if ($String.Length -eq 0) {
-        return ,@()
-    } else {
-        [String[]] $lines = $String -split "`n"
-        if ($lines[-1].Length -eq 0) {
-            # Get rid of trailing newlines.
-            $lines = $lines[0..($lines.Count - 2)]
-        }
-        return ,$lines
-    }
-}

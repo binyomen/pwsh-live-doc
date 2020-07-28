@@ -45,5 +45,5 @@ if ($PSCmdlet.ParameterSetName -eq 'PageNames') {
     TestOnlyMajorVersions = $TestOnlyMajorVersions.ToBool()
 }
 
-Import-Module .\docgen -Force
+Import-Module $PSScriptRoot\docgen -Force
 GenerateSite -PageFilter $PageFilter -Options $options

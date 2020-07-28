@@ -109,12 +109,12 @@ function GetExeVersion {
     return $version
 }
 
-function NewLineOutput {
+function NewExampleOutput {
     [CmdletBinding()]
     [OutputType([PSCustomObject])]
     param(
         [Parameter(Mandatory)]
-        [UInt32] $LineNumber,
+        [SemanticVersion] $Version,
         [Parameter(Mandatory)]
         [AllowEmptyString()]
         [String] $Stdout,
@@ -124,219 +124,11 @@ function NewLineOutput {
     )
 
     return [PSCustomObject]@{
-        PSTypeName = 'LineOutput'
-        LineNumber = $LineNumber
-        Stdout = $Stdout
-        Stderr = $Stderr
-        StdoutStartsLine = $false
-        StderrStartsLine = $false
-        StdoutEndsLine = $false
-        StderrEndsLine = $false
-    }
-}
-
-function NewExampleOutput {
-    [CmdletBinding()]
-    [OutputType([PSCustomObject])]
-    param(
-        [Parameter(Mandatory)]
-        [SemanticVersion] $Version,
-        [Parameter(Mandatory)]
-        [PSTypeName('LineOutput')]
-        [PSCustomObject[]] $Lines
-    )
-
-    return [PSCustomObject]@{
         PSTypeName = 'ExampleOutput'
         Version = $Version
-        Lines = $Lines
+        Stdout = $Stdout
+        Stderr = $Stderr
     }
-}
-
-AddScriptMethod ExampleOutput Stdout {
-    [CmdletBinding()]
-    [OutputType([String])]
-    param()
-
-    [String[]] $streamList = @()
-    foreach ($line in $this.Lines) {
-        if ($line.Stdout.Length -ne 0) {
-            $streamList += $line.Stdout
-        }
-    }
-    return $streamList -join ''
-} ScriptProperty
-
-AddScriptMethod ExampleOutput Stderr {
-    [CmdletBinding()]
-    [OutputType([String])]
-    param()
-
-    [String[]] $streamList = @()
-    foreach ($line in $this.Lines) {
-        if ($line.Stderr.Length -ne 0) {
-            $streamList += $line.Stderr
-        }
-    }
-    return $streamList -join ''
-} ScriptProperty
-
-AddScriptMethod ExampleOutput StdoutStartsLine {
-    [CmdletBinding()]
-    [OutputType([Boolean])]
-    param()
-
-    foreach ($line in $this.Lines) {
-        if ($line.Stdout.Length -gt 0) {
-            return $line.StdoutStartsLine
-        }
-    }
-    return $false
-} ScriptProperty
-
-AddScriptMethod ExampleOutput StderrStartsLine {
-    [CmdletBinding()]
-    [OutputType([Boolean])]
-    param()
-
-    foreach ($line in $this.Lines) {
-        if ($line.Stderr.Length -gt 0) {
-            return $line.StderrStartsLine
-        }
-    }
-    return $false
-} ScriptProperty
-
-AddScriptMethod ExampleOutput StdoutEndsLine {
-    [CmdletBinding()]
-    [OutputType([Boolean])]
-    param()
-
-    [Boolean] $stdoutEndsLine = $false
-    foreach ($line in $this.Lines) {
-        if ($line.Stdout.Length -gt 0) {
-            $stdoutEndsLine = $line.StdoutEndsLine
-        }
-    }
-    return $stdoutEndsLine
-} ScriptProperty
-
-AddScriptMethod ExampleOutput StderrEndsLine {
-    [CmdletBinding()]
-    [OutputType([Boolean])]
-    param()
-
-    [Boolean] $stderrEndsLine = $false
-    foreach ($line in $this.Lines) {
-        if ($line.Stderr.Length -gt 0) {
-            $stderrEndsLine = $line.StderrEndsLine
-        }
-    }
-    return $stderrEndsLine
-} ScriptProperty
-
-AddScriptMethod ExampleOutput GetLines {
-    [CmdletBinding()]
-    [OutputType([PSCustomObject[]])]
-    param(
-        [Parameter(Mandatory)]
-        [UInt32] $LineNumber
-    )
-
-    return ,@($this.Lines | Where-Object { $_.LineNumber -eq $LineNumber })
-}
-
-function RemovePrefix {
-    [CmdletBinding()]
-    [OutputType([String])]
-    param(
-        [Parameter(Mandatory)]
-        [UInt32] $PrefixLength,
-        [Parameter(Mandatory)]
-        [AllowEmptyString()]
-        [String] $String
-    )
-
-    if (($String.Length -eq 0) -or ($PrefixLength -eq $String.Length)) {
-        return ''
-    } else {
-        return $String[$PrefixLength..($String.Length - 1)] -join ''
-    }
-}
-
-function StartsLine {
-    [CmdletBinding()]
-    [OutputType([Boolean])]
-    param(
-        [Parameter(Mandatory)]
-        [AllowEmptyString()]
-        [String] $AllOutput,
-        [Parameter(Mandatory)]
-        [UInt32] $CurrentChars,
-        [Parameter(Mandatory)]
-        [AllowEmptyString()]
-        [String] $NewOutput
-    )
-
-    if (($AllOutput.Length -eq 0) -or ($NewOutput.Length -eq 0)) {
-        return $false
-    } elseif ($CurrentChars -eq 0) {
-        return $true
-    } else {
-        return $AllOutput[$CurrentChars - 1] -eq "`n"
-    }
-}
-
-function EndsLine {
-    [CmdletBinding()]
-    [OutputType([Boolean])]
-    param(
-        [Parameter(Mandatory)]
-        [AllowEmptyString()]
-        [String] $NewOutput
-    )
-
-    return ($NewOutput.Length -gt 0) -and ($NewOutput[-1] -eq "`n")
-}
-
-function CreateLineOutput {
-    [CmdletBinding()]
-    [OutputType([PSCustomObject])]
-    param(
-        [Parameter(Mandatory)]
-        [UInt32] $CurrentStdoutChars,
-        [Parameter(Mandatory)]
-        [UInt32] $CurrentStderrChars,
-        [Parameter(Mandatory)]
-        [UInt32] $LineNumber,
-        [Parameter(Mandatory)]
-        [FileInfo] $StdoutFile,
-        [Parameter(Mandatory)]
-        [FileInfo] $StderrFile
-    )
-
-    # Sometimes with PowerShell v2 there's a BOM at the beginning of the output string.
-    [String] $stdout = FixNewLines (RemoveBom (Get-Content -Raw $StdoutFile))
-    [String] $stderr = FixNewLines (RemoveBom (Get-Content -Raw $StderrFile))
-
-    [String] $newStdout = (RemovePrefix $CurrentStdoutChars $stdout)
-    [String] $newStderr = (RemovePrefix $CurrentStderrChars $stderr)
-
-    [PSCustomObject] $line = NewLineOutput $LineNumber $newStdout $newStderr
-    if (StartsLine $stdout $CurrentStdoutChars $line.Stdout) {
-        $line.StdoutStartsLine = $true
-    }
-    if (StartsLine $stderr $CurrentStderrChars $line.Stderr) {
-        $line.StderrStartsLine = $true
-    }
-    if (EndsLine $line.Stdout) {
-        $line.StdoutEndsLine = $true
-    }
-    if (EndsLine $line.Stderr) {
-        $line.StderrEndsLine = $true
-    }
-
-    return $line
 }
 
 function RunAndGatherOutput {
@@ -355,54 +147,15 @@ function RunAndGatherOutput {
     [FileInfo] $stdoutFile = New-Item "$WorkingDir\__stdout"
     [FileInfo] $stderrFile = New-Item "$WorkingDir\__stderr"
 
-    [Process] $process = Start-Process $Exe.File -Args "$($Exe.InitialArgs) $Arguments" `
+    Start-Process $Exe.File -Args "$($Exe.InitialArgs) $Arguments" `
         -RedirectStandardOutput $stdoutFile -RedirectStandardError $stderrFile `
-        -WorkingDirectory $WorkingDir -NoNewWindow -PassThru
+        -WorkingDirectory $WorkingDir -Wait -NoNewWindow
 
-    [NamedPipeServerStream] $server = [NamedPipeServerStream]::new($WorkingDir.Name, [PipeDirection]::InOut)
-    $server.WaitForConnection()
+    # Sometimes with PowerShell v2 there's a BOM at the beginning of the output string.
+    [String] $stdout = FixNewLines (RemoveBom (Get-Content -Raw $stdoutFile))
+    [String] $stderr = FixNewLines (RemoveBom (Get-Content -Raw $stderrFile))
 
-    [StreamReader] $reader = [StreamReader]::new($server)
-    [StreamWriter] $writer = [StreamWriter]::new($server)
-    $writer.AutoFlush = $true
-
-    [PSCustomObject[]] $lineOutputs = @()
-
-    [UInt32] $totalStdoutChars = 0
-    [UInt32] $totalStderrChars = 0
-    [UInt32] $previousLineNumber = 0
-    while ($true) {
-        [UInt32] $lineNumber = $reader.ReadLine()
-        if ($lineNumber -eq 0) {
-            break
-        }
-
-        if ($previousLineNumber -gt 0) {
-            [PSCustomObject] $lineOutput = `
-                CreateLineOutput $totalStdoutChars $totalStderrChars $previousLineNumber $stdoutFile $stderrFile
-            $totalStdoutChars += $lineOutput.Stdout.Length
-            $totalStderrChars += $lineOutput.Stderr.Length
-            $lineOutputs += $lineOutput
-        }
-
-        $previousLineNumber = $lineNumber
-        $writer.WriteLine('ready')
-    }
-
-    $process.WaitForExit()
-
-    # Get the output from the last line.
-    $lineOutputs += `
-        CreateLineOutput $totalStdoutChars $totalStderrChars $previousLineNumber $stdoutFile $stderrFile
-
-    [PSCustomObject] $output = NewExampleOutput $Exe.Version $lineOutputs
-    [String] $stdout = FixNewLines (RemoveBom (Get-Content -Raw $StdoutFile))
-    [String] $stderr = FixNewLines (RemoveBom (Get-Content -Raw $StderrFile))
-    if (($output.Stdout -ne $stdout) -or ($output.Stderr -ne $stderr)) {
-        throw 'Did not properly collect stdio'
-    }
-
-    return $output
+    return NewExampleOutput $Exe.Version $stdout $stderr
 }
 
 function InvokeExe {
@@ -419,21 +172,9 @@ function InvokeExe {
     [FileInfo] $tempScript = New-Item "Temp:\pwsh-live-doc_$(New-Guid)\__script.ps1" -Force
     try {
         Set-Content $tempScript.FullName $Code
-        [String[]] $lines = Get-Content $tempScript
-        [String] $breakpointString = ''
-        foreach ($i in 1..$lines.Count) {
-            $breakpointString += `
-                "Set-PSBreakpoint -Script $tempScript -Line $i " +
-                    "-Action { RecordLine $i > `$null } > `$null; "
-        }
+        [String] $command = "Import-Module -Force $PSScriptRoot\..\util; $tempScript;"
 
-        [String] $command = `
-            "Import-Module -Force $PSScriptRoot\..\util; " +
-            $breakpointString +
-            "$tempScript;"
-        [PSCustomObject] $output = RunAndGatherOutput $tempScript.Directory $Exe "-NoProfile -NonInteractive -Command $command"
-
-        return $output
+        return RunAndGatherOutput $tempScript.Directory $Exe "-NoProfile -NonInteractive -Command $command"
     } finally {
         # The stdio files may still be open by the process, even though
         # PowerShell says it's exited. Keep trying until we can delete them.

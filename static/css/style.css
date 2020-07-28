@@ -64,6 +64,7 @@ main {
 
 .code-view {
     overflow: auto;
+    border-radius: 0.3em;
 }
 
 .code-view ol {
@@ -79,46 +80,19 @@ main {
     line-height: 1.5;
 }
 
-.line-grid {
-    display: grid;
-    grid-template-columns: 1em 1fr;
-}
-
-
-.code-view pre, .code-view code {
+.code-view pre {
     margin: 0;
     padding: 0;
 }
 
 .code-view code {
+    padding-top: 0;
+    padding-bottom: 0;
     padding-left: 0.5em;
     padding-right: 0.5em;
+
     /* Override the highlightjs styling. */
     overflow: visible;
-}
-
-.code-view summary {
-    list-style-type: none;
-}
-
-.code-view summary::-webkit-details-marker {
-    display: none;
-}
-
-.code-view summary > div {
-    width: 0.6em;
-    height: 0.6em;
-    place-self: center;
-
-    background: url('/img/expand.svg');
-    background-size: 100%;
-
-    cursor: pointer;
-}
-
-.code-view details[open] summary > div {
-    background: url('/img/collapse.svg');
-    background-size: 100%;
 }
 
 .code-view .line-number::before {
@@ -126,7 +100,7 @@ main {
     content: counter(line-number);
 
     display: inline-block;
-    width: 2em;
+    width: 1.5em;
     box-sizing: border-box;
 
     padding-right: 0.6em;
@@ -136,28 +110,29 @@ main {
     text-align: end;
 }
 
-.raw-output-view {
-    padding-top: 1em;
+.output-view {
+    padding-top: 0.7em;
     padding-bottom: 1em;
 }
 
-.raw-output-view summary {
-    font-size: 1.2em;
-}
-
 .stream-view {
-    padding: 0.7em;
+    padding: 0.5em;
 }
 
 .stream-view [role="tablist"] {
     display: flex;
-    background: black;
+
+    border-radius: 0.3em 0.3em 0 0;
+    overflow: hidden;
+
+    /* To prevent color bleed effects in the top left corner of the tablist,
+     * apply a gradient */
+    background: linear-gradient(135deg, transparent, black 10px);
 }
 
 .stream-view [role="tablist"].tablist-hidden {
     display: none;
 }
-
 
 .stream-view [role="tab"] {
     display: block;
@@ -186,11 +161,12 @@ main {
 
 .tabpanel-container.tabpanel-overlaps {
     background: #f0f0f0;
+    border-radius: 0 0 0.3em 0.3em;
 }
 
 .stream-view [role="tabpanel"] {
     background: #f0f0f0;
-    border-radius: 0.5em;
+    border-radius: 0.3em;
     margin-bottom: 0.7em;
     overflow: auto;
 }
@@ -199,18 +175,12 @@ main {
     display: none;
 }
 
-.stream-view [role="tabpanel"] aside {
-    font-style: italic;
-    padding-top: 0.2em;
-    padding-bottom: 0.2em;
-}
-
-.stream-view .output-text {
+.stream-view pre {
     padding: 0.5em;
     margin: 0;
 }
 
-.output-view-heading {
+.stream-view-heading {
     padding-bottom: 0.2em;
     font-size: 1.4em;
 }

@@ -31,34 +31,3 @@ function NewErrorRecord {
     }
 }
 Export-ModuleMember -Function NewErrorRecord
-
-[System.IO.Pipes.NamedPipeClientStream] $script:client = `
-    New-Object System.IO.Pipes.NamedPipeClientStream( `
-        '.', `
-        (Get-Item .).Name, `
-        [System.IO.Pipes.PipeDirection]::InOut, `
-        [System.IO.Pipes.PipeOptions]::None, `
-        [System.Security.Principal.TokenImpersonationLevel]::Impersonation)
-$script:client.Connect()
-
-[System.IO.StreamReader] $script:reader = New-Object System.IO.StreamReader($client)
-[System.IO.StreamWriter] $script:writer = New-Object System.IO.StreamWriter($client)
-$script:writer.AutoFlush = $true
-
-function RecordLine {
-    [CmdletBinding()]
-    [OutputType([Void])]
-    param(
-        # Powershell version 2 doesn't support passing in the current
-        # breakpoint as $_ to the -Action parameter, so we need to handle
-        # passing in the line number ourselves.
-        [Parameter(Mandatory=$true)]
-        [UInt32] $LineNumber
-    )
-
-    $script:writer.WriteLine($LineNumber)
-    $script:reader.ReadLine() > $null
-
-    $script:currentBreakpointIndex += 1
-}
-Export-ModuleMember -Function RecordLine

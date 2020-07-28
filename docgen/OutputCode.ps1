@@ -1,6 +1,3 @@
-[String] $script:startsLineMarker = '{{START}}'
-[String] $script:endsLineMarker = '{{END}}'
-
 function RunPowerShellExe {
     [CmdletBinding()]
     [OutputType([PSCustomObject])]
@@ -22,37 +19,21 @@ function GroupVersionsByOutput {
     [OutputType([Dictionary[String, SemanticVersion[]]])]
     param(
         [Parameter(Mandatory)]
-        [AllowEmptyCollection()]
         [PSTypeName('ExampleOutput')]
         [PSCustomObject[]] $Outputs,
         [Parameter(Mandatory)]
-        [ScriptBlock] $ContentGetter,
-        [Parameter(Mandatory)]
-        [ScriptBlock] $StartsLineGetter,
-        [Parameter(Mandatory)]
-        [ScriptBlock] $EndsLineGetter
+        [ScriptBlock] $ContentGetter
     )
 
     [Dictionary[String, SemanticVersion[]]] $outputMap = [Dictionary[String, SemanticVersion[]]]::new()
     foreach ($output in $Outputs) {
         [String] $outputContent = & $ContentGetter $output
-        [Boolean] $startsLine = & $StartsLineGetter $output
-        [Boolean] $endsLine = & $EndsLineGetter $output
 
-        [String] $key = ''
-        if ($startsLine) {
-            $key += $script:startsLineMarker
-        }
-        $key += $outputContent
-        if ($endsLine) {
-            $key += $script:endsLineMarker
+        if (-not $outputMap.ContainsKey($outputContent)) {
+            $outputMap[$outputContent] = @()
         }
 
-        if (-not $outputMap.ContainsKey($key)) {
-            $outputMap[$key] = @()
-        }
-
-        $outputMap[$key] += $output.Version
+        $outputMap[$outputContent] += $output.Version
     }
 
     return $outputMap
@@ -88,26 +69,7 @@ function FormatOutputStream {
         [String] $StreamString
     )
 
-    if ($StreamString.Length -gt 0) {
-        [String] $content = $StreamString
-
-        [String] $prefix = '<aside>[does not start line]</aside>'
-        if ($content.StartsWith($script:startsLineMarker)) {
-            $prefix = ''
-            $content = $content.Substring($script:startsLineMarker.Length)
-        }
-
-        [String] $suffix = '<aside>[does not end line]</aside>'
-        if ($content.EndsWith($script:endsLineMarker)) {
-            $suffix = ''
-            [UInt32] $finalLength = $content.Length - $script:endsLineMarker.Length
-            $content = $content.Substring(0, $finalLength)
-        }
-
-        return "$prefix<pre class=`"output-text`"><samp>$(EscapeHtml $content)</samp></pre>$suffix"
-    } else {
-        return '<p>No output</p>'
-    }
+    return "<pre><samp>$(EscapeHtml $StreamString)</samp></pre>"
 }
 
 function HasOutput {
@@ -133,9 +95,7 @@ function GetStreamViewHtml {
         [Dictionary[String, SemanticVersion[]]] $StreamMap,
 
         [Parameter(Mandatory)]
-        [String] $StreamName,
-
-        [Switch] $KeepEmptyOutputs
+        [String] $StreamName
     )
 
     if (-not (HasOutput $StreamMap)) {
@@ -156,24 +116,22 @@ function GetStreamViewHtml {
     [String] $tablist = '<div role="tablist" class="tablist-hidden">'
     [String] $tabpanels = ''
     foreach ($streamString in $sortedKeys) {
-        if ($KeepEmptyOutputs -or ($streamString.Length -gt 0)) {
-            [String] $tabId = (New-Guid).Guid
-            [String] $versionString = $generalizedMap[$streamString]
+        [String] $tabId = (New-Guid).Guid
+        [String] $versionString = $generalizedMap[$streamString]
 
-            [String] $tabpanelId = (New-Guid).Guid
-            [String] $formattedStream = FormatOutputStream $streamString
-            [String] $noScriptHeading = "<noscript><div aria-hidden=`"true`">$versionString</div></noscript>"
+        [String] $tabpanelId = (New-Guid).Guid
+        [String] $formattedStream = FormatOutputStream $streamString
+        [String] $noScriptHeading = "<noscript><div aria-hidden=`"true`">$versionString</div></noscript>"
 
-            $tablist += "<button id=`"$tabId`" role=`"tab`" aria-controls=`"$tabpanelId`">$versionString</button>"
-            $tabpanels += "$noScriptHeading<div id=`"$tabpanelId`" role=`"tabpanel`" tabindex=`"0`" aria-labelledby=`"$tabId`">$formattedStream</div>"
-        }
+        $tablist += "<button id=`"$tabId`" role=`"tab`" aria-controls=`"$tabpanelId`">$versionString</button>"
+        $tabpanels += "$noScriptHeading<div id=`"$tabpanelId`" role=`"tabpanel`" tabindex=`"0`" aria-labelledby=`"$tabId`">$formattedStream</div>"
     }
     $tablist += '</div>'
 
     [String] $streamId = (New-Guid).Guid
     return @"
         <div class=`"stream-view`">
-            <div class =`"output-view-heading`" id=`"$streamId`">$StreamName</div>
+            <div class =`"stream-view-heading`" id=`"$streamId`">$StreamName</div>
             <div aria-labelledby=`"$streamId`">
                 $tablist
                 <div class=`"tabpanel-container`">
@@ -184,37 +142,7 @@ function GetStreamViewHtml {
 "@
 }
 
-function GetOutputTableHtml {
-    [CmdletBinding()]
-    [OutputType([String])]
-    param(
-        [Parameter(Mandatory)]
-        [AllowEmptyCollection()]
-        [PSTypeName('ExampleOutput')]
-        [PSCustomObject[]] $Outputs,
-
-        [Switch] $KeepEmptyOutputs
-    )
-
-    # Create maps of stdout/stderr strings to list of versions. This lets us
-    # group versions by what their output is.
-    [Dictionary[String, SemanticVersion[]]] $stdoutMap = `
-        GroupVersionsByOutput $Outputs { $args[0].Stdout } { $args[0].StdoutStartsLine } { $args[0].StdoutEndsLine }
-    [Dictionary[String, SemanticVersion[]]] $stderrMap = `
-        GroupVersionsByOutput $Outputs { $args[0].Stderr } { $args[0].StderrStartsLine } { $args[0].StderrEndsLine }
-
-    [SemanticVersion[]] $allVersions = $outputs | ForEach-Object { $_.Version }
-
-    if ((-not (HasOutput $stdoutMap)) -and (-not (HasOutput $stderrMap))) {
-        return ''
-    } else {
-        [String] $stdoutView = GetStreamViewHtml $allVersions $stdoutMap 'Stdout' -KeepEmptyOutputs:$KeepEmptyOutputs
-        [String] $stderrView = GetStreamViewHtml $allVersions $stderrMap 'Stderr' -KeepEmptyOutputs:$KeepEmptyOutputs
-        return $stdoutView + $stderrView
-    }
-}
-
-function BuildRawOutputView {
+function GetOutputViewHtml {
     [CmdletBinding()]
     [OutputType([String])]
     param(
@@ -223,18 +151,28 @@ function BuildRawOutputView {
         [PSCustomObject[]] $Outputs
     )
 
-    [String] $html = '<div class="raw-output-view"><details><summary>Raw output</summary>'
+    # Create maps of stdout/stderr strings to list of versions. This lets us
+    # group versions by what their output is.
+    [Dictionary[String, SemanticVersion[]]] $stdoutMap = GroupVersionsByOutput $Outputs { $args[0].Stdout }
+    [Dictionary[String, SemanticVersion[]]] $stderrMap = GroupVersionsByOutput $Outputs { $args[0].Stderr }
 
-    [String] $outputTableHtml = GetOutputTableHtml $Outputs -KeepEmptyOutputs
-    if ($outputTableHtml.Length -eq 0) {
-        $html += '<p>No output</p>'
-    } else {
-        $html += $outputTableHtml
-    }
+    [SemanticVersion[]] $allVersions = $outputs | ForEach-Object { $_.Version }
 
-    $html += '</details></div>'
+    [String] $stdoutView = GetStreamViewHtml $allVersions $stdoutMap 'Stdout'
+    [String] $stderrView = GetStreamViewHtml $allVersions $stderrMap 'Stderr'
+    return $stdoutView + $stderrView
+}
 
-    return $html
+function BuildOutputView {
+    [CmdletBinding()]
+    [OutputType([String])]
+    param(
+        [Parameter(Mandatory)]
+        [PSTypeName('ExampleOutput')]
+        [PSCustomObject[]] $Outputs
+    )
+
+    return "<div class=`"output-view`">$(GetOutputViewHtml $Outputs)</div>"
 }
 
 function BuildCodeHtml {
@@ -242,36 +180,17 @@ function BuildCodeHtml {
     [OutputType([String])]
     param(
         [Parameter(Mandatory)]
-        [String] $Code,
-        [Parameter(Mandatory)]
-        [PSTypeName('ExampleOutput')]
-        [PSCustomObject[]] $Outputs
+        [String] $Code
     )
 
-    [String] $html = '<div class="code-view"><ol>'
+    # Use hljs so we get syntax highlighting background. This can be removed
+    # once we do syntax highlighting at compile time.
+    [String] $html = '<div class="code-view hljs"><ol>'
 
-    [String[]] $codeLines = $Code -split "`n"
-    foreach ($lineNumber in 1..$codeLines.Count) {
-        [PSCustomObject[]] $outputsForLine = @()
-        foreach ($output in $Outputs) {
-            [PSCustomObject[]] $lines = $output.GetLines($lineNumber)
-            if ($lines.Count -gt 0) {
-                $outputsForLine += NewExampleOutput $output.Version $lines
-            }
-        }
-
-        [String] $lineText = $codeLines[$lineNumber - 1]
-        [String] $outputTableHtml = GetOutputTableHtml $outputsForLine
-        [String] $lineHtml = GetSingleLineHtml $lineText
-        if ($outputTableHtml.Length -gt 0) {
-            [String] $lineId = (New-Guid).Guid
-            [String] $expandIcon = '<div aria-label="expand icon"></div>'
-            $html += "<li aria-labelledby=`"$lineId`"><details><summary id=`"$lineId`" class=`"line-grid`">$expandIcon$lineHtml</summary>$outputTableHtml</details></li>"
-        } else {
-            $html += "<li class=`"line-grid`"><span></span>$lineHtml</li>"
-        }
+    [String[]] $lines = $Code -split "`n"
+    foreach ($line in $lines) {
+        $html += "<li>$(GetSingleLineHtml $line)</li>"
     }
-
     $html += '</ol></div>'
 
     return $html
@@ -283,12 +202,12 @@ function GetSingleLineHtml {
     param(
         [Parameter(Mandatory)]
         [AllowEmptyString()]
-        [String] $LineText
+        [String] $Line
     )
 
     return `
         "<pre><code class=`"powershell`">" +
-            "<span class=`"line-number`" aria-hidden=`"true`"></span>$LineText" +
+            "<span class=`"line-number`" aria-hidden=`"true`"></span>$Line" +
         "</code></pre>"
 }
 
@@ -307,11 +226,11 @@ function OutputCode {
 
     [SemanticVersion] $minVersionSemantic = [SemanticVersion]::new($MinVersion)
 
-    [String] $codeAsString = FormatPageText $Code.ToString()
+    [String] $codeAsString = $Code.ToString()
     [PSCustomObject[]] $outputs = GetOutputs $minVersionSemantic $codeAsString
 
-    [String] $codeHtml = BuildCodeHtml (EscapeHtml $codeAsString) $outputs
-    [String] $rawOutputHtml = BuildRawOutputView $outputs
+    [String] $codeHtml = BuildCodeHtml (EscapeHtml (FormatPageText $codeAsString))
+    [String] $rawOutputHtml = BuildOutputView $outputs
 
     return $codeHtml + $rawOutputHtml
 }
