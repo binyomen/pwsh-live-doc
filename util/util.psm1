@@ -49,13 +49,12 @@ function RecordLine {
     [CmdletBinding()]
     [OutputType([Void])]
     param(
+        # Powershell version 2 doesn't support passing in the current
+        # breakpoint as $_ to the -Action parameter, so we need to handle
+        # passing in the line number ourselves.
         [Parameter(Mandatory=$true)]
         [UInt32] $LineNumber
     )
-
-    # Powershell version 2 doesn't support passing in the current breakpoint as
-    # $_ to the -Action parameter, so we need to handle passing in the line
-    # number ourselves.
 
     $script:writer.WriteLine($LineNumber)
     $script:reader.ReadLine() > $null
