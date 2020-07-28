@@ -7,12 +7,11 @@ function AddScriptMethod {
         [Parameter(Mandatory)]
         [String] $MethodName,
         [Parameter(Mandatory)]
-        [ScriptBlock] $Definition,
-        [String] $MemberType = 'ScriptMethod'
+        [ScriptBlock] $Definition
     )
 
     Update-TypeData -TypeName $TypeName -MemberName $MethodName `
-        -MemberType $MemberType -Value $Definition -Force
+        -MemberType ScriptMethod -Value $Definition -Force
 }
 
 function GetIndent {
