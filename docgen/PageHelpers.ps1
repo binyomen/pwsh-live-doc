@@ -208,7 +208,7 @@ function BuildPageHtml {
             <title>$Title</title>
             <link rel="stylesheet" type="text/css" href="/css/style.css">
             $(if ($IncludeHighlightDeps) {
-                '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.0.0/styles/default.min.css">
+                '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.0.0/styles/magula.min.css">
                 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.0.3/highlight.min.js"></script>
                 <script charset="UTF-8" src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.0.3/languages/powershell.min.js"></script>
                 <script>hljs.initHighlightingOnLoad();</script>'
