@@ -159,17 +159,17 @@ main {
 }
 
 .stream-view [role="tab"][aria-selected="true"] {
-    background: #f0f0f0;
+    background: #f4f4f4;
     color: black;
 }
 
 .tabpanel-container.tabpanel-overlaps {
-    background: #f0f0f0;
+    background: #f4f4f4;
     border-radius: 0 0 0.3em 0.3em;
 }
 
 .stream-view [role="tabpanel"] {
-    background: #f0f0f0;
+    background: #f4f4f4;
     border-radius: 0.3em;
     margin-bottom: 0.7em;
     overflow: auto;

@@ -124,7 +124,7 @@ function GetStreamViewHtml {
         [String] $noScriptHeading = "<noscript><div aria-hidden=`"true`">$versionString</div></noscript>"
 
         $tablist += "<button id=`"$tabId`" role=`"tab`" aria-controls=`"$tabpanelId`">$versionString</button>"
-        $tabpanels += "$noScriptHeading<div id=`"$tabpanelId`" role=`"tabpanel`" tabindex=`"0`" aria-labelledby=`"$tabId`">$formattedStream</div>"
+        $tabpanels += "$noScriptHeading<div id=`"$tabpanelId`" role=`"tabpanel`" aria-labelledby=`"$tabId`">$formattedStream</div>"
     }
     $tablist += '</div>'
 
