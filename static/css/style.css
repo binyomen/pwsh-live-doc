@@ -150,11 +150,15 @@ main {
     color: white;
 }
 
-.stream-view [role="tab"]:hover, .stream-view [role="tab"]:focus {
-    background: cornflowerblue;
+.stream-view [role="tab"]:hover {
+    background: #606060;
 }
 
-.stream-view [role="tab"][aria-selected="true"]:not(:focus) {
+.stream-view [role="tab"]:focus {
+    box-shadow: inset 0 0 0 0.2em cornflowerblue;
+}
+
+.stream-view [role="tab"][aria-selected="true"] {
     background: #f0f0f0;
     color: black;
 }
