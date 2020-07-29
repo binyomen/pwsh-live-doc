@@ -15,6 +15,7 @@ function RunPage {
         Note: On GitHub Actions runners (where this site was generated), the
         output is different than on my (benweedon's) machine. [Issue
         29](https://github.com/benweedon/pwsh-live-doc/issues/29) tracks this.
+        Best not to trust anything on this page until we have this figured out.
 '@
 
     OutputSection 'Basic case' {
@@ -32,7 +33,8 @@ function RunPage {
         except redirecting to `$null` or a file and the redirect version of the
         variable, `Void`, and `Out-Null` cases.
 
-        Here is the output from writing directly to stderr:
+        Here is the output from writing directly to stderr. All versions print
+        the same things, except that versions 2 and 5 have stack traces:
 '@
 
         OutputCode {
@@ -43,7 +45,10 @@ function RunPage {
         }
 
         OutputText @'
-        Here we are redirecting to stdout, `$null`, and a file:
+        Here we are redirecting to stdout, `$null`, and a file. Nothing prints
+        the `$null` line. Versions 2 and 5 write the stdout line to stderr,
+        while PowerShell Core writes it to stdout. All versions correctly write
+        to the file, with versions 2 and 5 including stack traces:
 '@
 
         OutputCode {
@@ -57,7 +62,10 @@ function RunPage {
 
         OutputText @'
         And finally here we redirect to a variable, cast to `Void`, and
-        redirect to `Out-Null`:
+        redirect to `Out-Null`. This test has huge variations between versions.
+        All versions handle variables the same, assigning stderr to the
+        variable if it's redirected and otherwise printing to stderr and
+        leaving the variable blank???????????????:
 '@
 
         OutputCode {
@@ -77,7 +85,8 @@ function RunPage {
         If you redirect stderr while `ErrorActionPreference` is `Stop`, an
         exception is generated. Here we have the same groupings, first writing
         directly to stderr. Since we aren't redirecting stderr, no exceptions
-        are thrown:
+        are thrown except in versions 2 and 5, which seem to like throwing the
+        second time you write to stderr for some reason:
 '@
 
         OutputCode {
