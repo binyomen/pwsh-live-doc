@@ -6,9 +6,9 @@ defaults:
 
 on:
   push:
-    branches: [ master ]
+    branches: [ main ]
   pull_request:
-    branches: [ master ]
+    branches: [ main ]
 
 jobs:
   build:
@@ -52,7 +52,7 @@ jobs:
       uses: nwtgck/actions-netlify@v1.1
       with:
         publish-dir: .\webroot\
-        production-branch: master
+        production-branch: main
         github-token: ${{ secrets.GITHUB_TOKEN }}
       env:
         NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
