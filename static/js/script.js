@@ -28,8 +28,6 @@ function activateTab(tab) {
 
     const tabpanel = getTabpanel(tab);
     tabpanel.classList.remove('tabpanel-inactive');
-
-    tab.focus();
 }
 
 function deactivateTab(tab) {
@@ -45,6 +43,7 @@ function selectTab(tab) {
     const otherTabs = getOtherTabs(tab);
     otherTabs.forEach(deactivateTab);
     activateTab(tab);
+    tab.focus();
 }
 
 function getPreviousTab(tab) {
