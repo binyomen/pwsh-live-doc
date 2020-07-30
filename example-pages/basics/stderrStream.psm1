@@ -12,10 +12,11 @@ function RunPage {
     param()
 
         OutputText @'
-        Note: On GitHub Actions runners (where this site was generated), the
-        output is different than on my (benweedon's) machine. [Issue
+        Note: On GitHub Actions runners (where this site was generated), all of
+        the output is different than on my (benweedon's) machine. [Issue
         29](https://github.com/benweedon/pwsh-live-doc/issues/29) tracks this.
-        Best not to trust anything on this page until we have this figured out.
+        Best not to fully trust anything on this page until we have this
+        figured out.
 '@
 
     OutputSection 'Basic case' {
@@ -34,7 +35,7 @@ function RunPage {
         variable, `Void`, and `Out-Null` cases.
 
         Here is the output from writing directly to stderr. All versions print
-        the same things, except that versions 2 and 5 have stack traces:
+        the same things, except that versions 2 and 5 have stack traces.
 '@
 
         OutputCode {
@@ -48,7 +49,7 @@ function RunPage {
         Here we are redirecting to stdout, `$null`, and a file. Nothing prints
         the `$null` line. Versions 2 and 5 write the stdout line to stderr,
         while PowerShell Core writes it to stdout. All versions correctly write
-        to the file, with versions 2 and 5 including stack traces:
+        to the file, with versions 2 and 5 including stack traces.
 '@
 
         OutputCode {
@@ -65,7 +66,12 @@ function RunPage {
         redirect to `Out-Null`. This test has huge variations between versions.
         All versions handle variables the same, assigning stderr to the
         variable if it's redirected and otherwise printing to stderr and
-        leaving the variable blank???????????????:
+        leaving the variable blank.
+
+        Then it gets kinda weird. Versions 6.x and 7.0.3 print the
+        non-redirected `Void` cast to stdout, while everything else prints it
+        to stderr. The `Out-Null` test is the same, except 7.0.2 joins the
+        6.x/7.0.3 group.
 '@
 
         OutputCode {
@@ -86,7 +92,7 @@ function RunPage {
         exception is generated. Here we have the same groupings, first writing
         directly to stderr. Since we aren't redirecting stderr, no exceptions
         are thrown except in versions 2 and 5, which seem to like throwing the
-        second time you write to stderr for some reason:
+        second time you write to stderr for some reason.
 '@
 
         OutputCode {
@@ -106,7 +112,7 @@ function RunPage {
         }
 
         OutputText @'
-        Then redirecting to stdout, `$null`, or a file all cause exceptions:
+        Then redirecting to stdout, `$null`, or a file all cause exceptions.
 '@
 
         OutputCode {
@@ -135,7 +141,14 @@ function RunPage {
 
         OutputText @'
         And finally redirecting to a variable, casting to `Void`, or
-        redirecting to `Out-Null` ??????:
+        redirecting to `Out-Null` throw exceptions for all tests where stderr
+        is redirected to stdout (which makes sense, since redirecting to stdout
+        by itself throws).
+
+        For all versions, assigning to a variable without redirection leaves
+        the variable empty and prints to stderr. All other operations throw
+        except in version 7.0, where casting stderr to `Void` prints to stderr
+        instead.
 '@
 
         OutputCode {
@@ -185,12 +198,13 @@ function RunPage {
         OutputText @'
         This behavior has interesting consequences for class methods (See
         [[Method stdio#Stderr]]). Since non-void methods automatically suppress
-        stdio, it's as if they were redirecting stderr to $null, so printing to
-        stderr within a non-void method will produce an exception when
+        stdio, it's as if they were redirecting stderr to `$null`, so printing
+        to stderr within a non-void method will produce an exception when
         `ErrorActionPreference` is `Stop`.
 
-        Void methods don't suppress stderr, though, even though they suppress
-        stdout.
+        `Void` methods don't suppress stderr, even though they suppress stdout.
+        Despite this, `Void` methods throw the first time stderr is printed in
+        version 5, and the second time in PowerShell Core.
 '@
 
         OutputCode -MinVersion 5 {
@@ -225,9 +239,12 @@ function RunPage {
         }
 
         OutputText @'
-        When `ErrorActionPreference` is `Continue`, it seems to mostly behave
-        like you'd expect. Non-void methods suppress stderr, and void methods
-        don't.
+        When `ErrorActionPreference` is `Continue`, I'm honestly not sure
+        what's going on. For GitHub Actions runners, it seems the `Void`
+        function prints to stdout in PowerShell Core and not in version 5. The
+        second `Void` print makes it to stderr on its own in version 5, but all
+        other prints starting with "Note" seem to be compressed onto a single
+        line.
 '@
 
         OutputCode -MinVersion 5 {
