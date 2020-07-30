@@ -70,7 +70,9 @@ function RunPage {
     }
 
     OutputSection 'Stderr' {
-        OutputText 'Coming soon...'
+        OutputText @'
+        See [[The stderr stream#Class methods|the stderr stream page]].
+'@
     }
 
     OutputSection 'Stdin' {

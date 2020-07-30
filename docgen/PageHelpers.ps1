@@ -1,6 +1,3 @@
-# Needed for types in classes below.
-using namespace System.IO
-
 function TitleToUrlPathSegment {
     [CmdletBinding()]
     [OutputType([String])]
@@ -94,11 +91,11 @@ AddScriptMethod Page AddToOutline {
     [OutputType([Void])]
     param()
 
-    $script:currentOutline = @()
+    [Dictionary[String, String]] $script:currentOutline = [Dictionary[String, String]]::new()
 
     $this.Module.RunPage() > $null
 
-    $script:outline[$this.GetTitle()] = $script:currentOutline
+    $script:outline[$this.GetTitle()] = [Tuple]::Create($this.GetLinkPath(), $script:currentOutline)
 }
 
 AddScriptMethod Page GetHtml {
@@ -114,14 +111,14 @@ AddScriptMethod Page GetHtml {
     return OutputExamplePage $this $this.ModuleFileName $this.Module $AllPages
 }
 
-#endregio
+#endregion
 
 function GetVersionsTestedHtml {
     [CmdletBinding()]
     [OutputType([String])]
     param()
 
-    [SemanticVersion[]] $versionsTested = GetPowerShellExesToTest | ForEach-Object { $_.Item2 } | Sort-Object
+    [SemanticVersion[]] $versionsTested = GetPowerShellExesToTest | ForEach-Object { $_.Version } | Sort-Object
     return ($versionsTested | ForEach-Object { "<span class=`"tested-version`">$_</span>" }) -join ", "
 }
 
@@ -207,6 +204,7 @@ function BuildPageHtml {
             <meta name="viewport" content="width=device-width, initial-scale=1">
             <title>$Title</title>
             <link rel="stylesheet" type="text/css" href="/css/style.css">
+            <script src="/js/script.js" type="module"></script>
             $(if ($IncludeHighlightDeps) {
                 '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.0.0/styles/magula.min.css">
                 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.0.3/highlight.min.js"></script>

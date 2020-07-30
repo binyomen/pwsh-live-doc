@@ -40,7 +40,7 @@ function GenerateSite {
     [PSCustomObject[]] $filteredPages = $pages | Where-Object { Invoke-Command $PageFilter -Args $pages, $_ }
 
     # Build the page outlines.
-    [Hashtable] $script:outline = @{}
+    [Dictionary[String, Tuple[String, Dictionary[String, String]]]] $script:outline = [Dictionary[String, Tuple[String, Dictionary[String, String]]]]::new()
     [Boolean] $script:buildingOutline = $true
     $filteredPages | `
         ForEach-Object { $_.AddToOutline() }

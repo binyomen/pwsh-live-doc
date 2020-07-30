@@ -32,6 +32,34 @@ function GetIndent {
     return $indent
 }
 
+function EscapeHtml {
+    [CmdletBinding()]
+    [OutputType([String])]
+    param(
+        [Parameter(Mandatory)]
+        [AllowEmptyString()]
+        [String] $Text
+    )
+
+    [String] $escaped = $Text
+    $escaped = $escaped -replace '&', '&amp;'
+    $escaped = $escaped -replace '<', '&lt;'
+    $escaped = $escaped -replace '>', '&gt;'
+    return $escaped
+}
+
+function FixNewLines {
+    [CmdletBinding()]
+    [OutputType([String])]
+    param(
+        [Parameter(Mandatory)]
+        [AllowEmptyString()]
+        [String] $Text
+    )
+
+    return $Text -replace "`r", ''
+}
+
 function FormatPageText {
     [CmdletBinding()]
     [OutputType([String])]
@@ -40,7 +68,7 @@ function FormatPageText {
         [String] $Text
     )
 
-    [String] $normalizedText = $Text -replace "`r", ""
+    [String] $normalizedText = FixNewLines $Text
     [String[]] $lines = $normalizedText -split "`n"
 
     # Remove any blank leading or ending lines.
@@ -70,4 +98,17 @@ function FormatPageText {
 
     [String] $formattedText = $deindentedLines -join "`n"
     return $formattedText
+}
+
+function GetRest {
+    [CmdletBinding()]
+    [OutputType([Object[]])]
+    param(
+        [Parameter(Mandatory)]
+        [Object[]] $List # oooh, it's generic!
+    )
+
+    return $List.Count -gt 1 ?
+        $List[1..($List.Count - 1)] :
+        ,@()
 }

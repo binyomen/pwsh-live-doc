@@ -1,6 +1,3 @@
-# Needed for types in classes below.
-using namespace System.Management.Automation
-
 [Object] $script:RootValue = ""
 
 function ValuesEqual {
@@ -25,19 +22,6 @@ function IsValueRoot {
     )
 
     return ValuesEqual $Value $script:RootValue
-}
-
-function GetRest {
-    [CmdletBinding()]
-    [OutputType([Object[]])]
-    param(
-        [Parameter(Mandatory)]
-        [Object[]] $List # oooh, it's generic!
-    )
-
-    return $List.Count -gt 1 ?
-        $List[1..($List.Count - 1)] :
-        ,@()
 }
 
 #region VersionNode

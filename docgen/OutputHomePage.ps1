@@ -16,8 +16,9 @@ function OutputHomePage {
     results. The documentation is kept up-to-date by downloading all release
     versions of PowerShell Core each time the site is generated, and running
     examples against those versions as well as against Windows PowerShell 5.1
-    and 2. Users can be confident that if they were to run the examples on
-    their own computers, the output would be the same.
+    and 2. Users should be confident that if they were to run the examples on
+    their own computers, the output would be the same (although at the moment
+    that isn't always the case).
 
     If you know of a PowerShell quirk which is missing from this site, please
     feel free to create an issue or open a PR at
