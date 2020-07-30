@@ -134,7 +134,7 @@ main {
 
     /* To prevent color bleed effects in the top left corner of the tablist,
      * apply a gradient */
-    background: linear-gradient(135deg, transparent, black 10px);
+    background: linear-gradient(135deg, transparent, #363636 10px);
 }
 
 .stream-view [role="tab"] {
@@ -146,10 +146,11 @@ main {
     padding-right: 2em;
 
     border: none;
+    box-shadow: -2px 0 0 0 #bbbbbb;
     outline: none;
 
     font-size: 0.9em;
-    background: black;
+    background: #363636;
     color: white;
 }
 
@@ -157,13 +158,20 @@ main {
     background: #606060;
 }
 
-.stream-view [role="tab"]:focus {
+.stream-view [role="tablist"] [role="tab"]:focus {
     box-shadow: inset 0 0 0 0.2em cornflowerblue;
 }
 
 .stream-view [role="tab"][aria-selected="true"] {
+    box-shadow: none;
     background: #f4f4f4;
     color: black;
+}
+
+.stream-view [role="tab"]:first-child,
+.stream-view [role="tab"]:focus + [role="tab"],
+.stream-view [role="tab"][aria-selected="true"] + [role="tab"] {
+    box-shadow: none;
 }
 
 .tabpanel-container.tabpanel-overlaps {
