@@ -113,7 +113,7 @@ function GetStreamViewHtml {
     [String[]] $sortedKeys = $generalizedMap.Keys | `
         Sort-Object @{ Expression = { $generalizedMap[$_] } }
 
-    [String] $tablist = '<div role="tablist" class="tablist-hidden">'
+    [String] $tablist = '<div class="tablist-wrapper tablist-hidden"><div role="tablist">'
     [String] $tabpanels = ''
     foreach ($streamString in $sortedKeys) {
         [String] $tabId = (New-Guid).Guid
@@ -121,12 +121,12 @@ function GetStreamViewHtml {
 
         [String] $tabpanelId = (New-Guid).Guid
         [String] $formattedStream = FormatOutputStream $streamString
-        [String] $noScriptHeading = "<noscript><div aria-hidden=`"true`">$versionString</div></noscript>"
+        [String] $noScriptHeading = "<noscript><label for=`"$tabpanelId`">$versionString</label></noscript>"
 
         $tablist += "<button id=`"$tabId`" role=`"tab`" aria-controls=`"$tabpanelId`">$versionString</button>"
         $tabpanels += "$noScriptHeading<div id=`"$tabpanelId`" role=`"tabpanel`" aria-labelledby=`"$tabId`">$formattedStream</div>"
     }
-    $tablist += '</div>'
+    $tablist += '</div></div>'
 
     [String] $streamId = (New-Guid).Guid
     return @"

@@ -119,19 +119,22 @@ main {
     padding: 0.5em;
 }
 
-.stream-view [role="tablist"] {
-    display: flex;
-
+.stream-view .tablist-wrapper {
     border-radius: 0.3em 0.3em 0 0;
     overflow: hidden;
+}
+
+.stream-view .tablist-wrapper.tablist-hidden {
+    display: none;
+}
+
+.stream-view [role="tablist"] {
+    display: flex;
+    overflow: auto;
 
     /* To prevent color bleed effects in the top left corner of the tablist,
      * apply a gradient */
     background: linear-gradient(135deg, transparent, black 10px);
-}
-
-.stream-view [role="tablist"].tablist-hidden {
-    display: none;
 }
 
 .stream-view [role="tab"] {
@@ -189,7 +192,7 @@ main {
     font-size: 1.4em;
 }
 
-.stream-view noscript > div {
+.stream-view noscript > label {
     padding-bottom: 0.2em;
     font-size: 1.2em;
 }

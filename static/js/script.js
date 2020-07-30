@@ -67,7 +67,6 @@ function initializeTab(tab) {
     // If this is the first tab in its tab-list.
     if (tab.previousSibling === null) {
         activateTab(tab);
-        tab.parentNode.classList.remove('tablist-hidden');
     } else {
         deactivateTab(tab);
     }
@@ -91,6 +90,9 @@ function initializeTab(tab) {
 }
 
 function initializeTabs() {
+    const tablists = document.querySelectorAll('.tablist-hidden');
+    tablists.forEach(e => e.classList.remove('tablist-hidden'));
+
     const tabs = document.querySelectorAll('[role="tab"]');
     tabs.forEach(initializeTab);
 }
