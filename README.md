@@ -25,9 +25,8 @@ You can install the latest version of PowerShell from
 
 ### Clone this repository
 
-You can clone it with `git clone
-https://github.com/benweedon/pwsh-live-doc.git` or `git clone
-git@github.com:benweedon/pwsh-live-doc.git`.
+You can clone it with `git clone https://github.com/binyomen/pwsh-live-doc.git`
+or `git clone git@github.com:binyomen/pwsh-live-doc.git`.
 
 ### Run downloadPwshPackages.ps1
 
