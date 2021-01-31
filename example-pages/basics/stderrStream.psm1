@@ -11,31 +11,17 @@ function RunPage {
     [OutputType([String[]])]
     param()
 
-        OutputText @'
-        Note: On GitHub Actions runners (where this site was generated), all of
-        the output is different than on my (binyomen's) machine. [Issue
-        29](https://github.com/binyomen/pwsh-live-doc/issues/29) tracks this.
-        Best not to fully trust anything on this page until we have this
-        figured out.
-'@
-
     OutputSection 'Basic case' {
         OutputText @'
-        When `ErrorActionPreference` is `Continue`, stderr in PowerShell Core
+        When `ErrorActionPreference` is `Continue`, stderr in PowerShell
         behaves similarly to stderr in other shells. Most stderr output by
         commands you call will be sent directly to the PowerShell process's own
         stderr. It is interesting to note, however, that assigning the stderr
         command to a variable, casting it to `Void`, or piping it to `Out-Null`
-        results in the stderr stream being received by stdout.
-
-        In PowerShell 2 and 5, the result is much different. Not only are stack
-        traces printed out to stderr (except for the first print for some
-        reason), nothing is printed to stdout. Everything is printed to stderr
-        except redirecting to `$null` or a file and the redirect version of the
-        variable, `Void`, and `Out-Null` cases.
+        produces different results.
 
         Here is the output from writing directly to stderr. All versions print
-        the same things, except that versions 2 and 5 have stack traces.
+        both lines to stderr.
 '@
 
         OutputCode {
@@ -63,15 +49,13 @@ function RunPage {
 
         OutputText @'
         And finally here we redirect to a variable, cast to `Void`, and
-        redirect to `Out-Null`. This test has huge variations between versions.
-        All versions handle variables the same, assigning stderr to the
-        variable if it's redirected and otherwise printing to stderr and
-        leaving the variable blank.
+        redirect to `Out-Null`. All PowerShell versions behave the same for
+        these examples.
 
-        Then it gets kinda weird. Versions 6.x and 7.0.3 print the
-        non-redirected `Void` cast to stdout, while everything else prints it
-        to stderr. The `Out-Null` test is the same, except 7.0.2 joins the
-        6.x/7.0.3 group.
+        All versions assign stderr to the variable if it's redirected and
+        otherwise print to stderr and leave the variable blank. The
+        non-redirected `Void` and `Out-Null` cases print to stderr, and the
+        redirected cases print nothing.
 '@
 
         OutputCode {
@@ -91,8 +75,7 @@ function RunPage {
         If you redirect stderr while `ErrorActionPreference` is `Stop`, an
         exception is generated. Here we have the same groupings, first writing
         directly to stderr. Since we aren't redirecting stderr, no exceptions
-        are thrown except in versions 2 and 5, which seem to like throwing the
-        second time you write to stderr for some reason.
+        are thrown.
 '@
 
         OutputCode {
@@ -140,15 +123,14 @@ function RunPage {
         }
 
         OutputText @'
-        And finally redirecting to a variable, casting to `Void`, or
-        redirecting to `Out-Null` throw exceptions for all tests where stderr
-        is redirected to stdout (which makes sense, since redirecting to stdout
-        by itself throws).
+        And finally assigning to a variable, casting to `Void`, or redirecting
+        to `Out-Null` throw exceptions for all cases where stderr is redirected
+        to stdout (which makes sense, since redirecting to stdout by itself
+        throws).
 
-        For all versions, assigning to a variable without redirection leaves
-        the variable empty and prints to stderr. All other operations throw
-        except in version 7.0, where casting stderr to `Void` prints to stderr
-        instead.
+        Assigning to a variable without redirection leaves the variable empty
+        and prints to stderr. Casting stderr to `Void` and piping to `Out-Null`
+        both print to stderr as well.
 '@
 
         OutputCode {
@@ -203,8 +185,7 @@ function RunPage {
         `ErrorActionPreference` is `Stop`.
 
         `Void` methods don't suppress stderr, even though they suppress stdout.
-        Despite this, `Void` methods throw the first time stderr is printed in
-        version 5, and the second time in PowerShell Core.
+        So, calling `VoidFunc` will print to stderr.
 '@
 
         OutputCode -MinVersion 5 {
@@ -239,12 +220,20 @@ function RunPage {
         }
 
         OutputText @'
-        When `ErrorActionPreference` is `Continue`, I'm honestly not sure
-        what's going on. For GitHub Actions runners, it seems the `Void`
-        function prints to stdout in PowerShell Core and not in version 5. The
-        second `Void` print makes it to stderr on its own in version 5, but all
-        other prints starting with "Note" seem to be compressed onto a single
-        line.
+        When `ErrorActionPreference` is `Continue`, `StringFunc`'s return value
+        gets printed to stdout (which makes sense, since it's returned), and it
+        prints its other lines to stderr. `VoidFunc` prints both its lines to
+        stderr.
+
+        What's interesting is that in GitHub Actions runners (where this site
+        was generated), everything in `StringFunc` is printed to stderr without
+        a newline after it. This results in the first line from `VoidFunc`
+        being on the same line as all `StringFunc` output. On my (binyomen's)
+        machine, nothing in `StringFunc` is printed at all. Since methods with
+        return values should supress stdio, it seems like my machine has the
+        "correct" behavior. This is, needless to say, extremely confusing, and
+        is tracked by [Issue
+        29](https://github.com/binyomen/pwsh-live-doc/issues/29).
 '@
 
         OutputCode -MinVersion 5 {
@@ -252,7 +241,7 @@ function RunPage {
 
             class C {
                 [String] StringFunc() {
-                    cmd /c 'echo Note: This line only seems to print on GitHub Actions >&2'
+                    cmd /c 'echo Note: These lines only seem to print on GitHub Actions >&2'
                     cmd /c 'echo StringFunc: printing to stderr 1 >&2'
                     cmd /c 'echo StringFunc: printing to stderr 2 >&2'
                     return 'some string'
