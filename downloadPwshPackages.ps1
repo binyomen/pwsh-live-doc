@@ -64,8 +64,7 @@ function WriteRateLimit {
         (Get-Date).ToUniversalTime()
     [String] $resetString = "$($timeUntilReset.Hours)h$($timeUntilReset.Minutes)m$($timeUntilReset.Seconds)s from now"
 
-    Write-Host "Rate limit:"
-    Write-Host "Limit: $limit, Remaining: $remaining, Reset: $resetString"
+    Write-Host "Rate limit: $limit, Remaining: $remaining, Reset: $resetString"
 }
 
 function GetAllReleaseUrls {
