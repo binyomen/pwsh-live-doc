@@ -22,7 +22,7 @@ function OutputHomePage {
 
     If you know of a PowerShell quirk which is missing from this site, please
     feel free to create an issue or open a PR at
-    <https://github.com/benweedon/pwsh-live-doc/>. Please also see
+    <https://github.com/binyomen/pwsh-live-doc/>. Please also see
     <https://github.com/nightroman/PowerShellTraps/>, which is itself an
     incredible store of PowerShell knowledge this site makes heavy use of.
 '@

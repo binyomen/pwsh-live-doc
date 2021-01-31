@@ -13,8 +13,8 @@ function RunPage {
 
         OutputText @'
         Note: On GitHub Actions runners (where this site was generated), all of
-        the output is different than on my (benweedon's) machine. [Issue
-        29](https://github.com/benweedon/pwsh-live-doc/issues/29) tracks this.
+        the output is different than on my (binyomen's) machine. [Issue
+        29](https://github.com/binyomen/pwsh-live-doc/issues/29) tracks this.
         Best not to fully trust anything on this page until we have this
         figured out.
 '@
