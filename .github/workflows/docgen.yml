@@ -19,7 +19,7 @@ jobs:
     - name: Print out the environment
       run: . .\printEnvironment.ps1
 
-    - name: Download PowerShell packages to test against
+    - name: Download PowerShell packages to run examples with
       run: .\downloadPwshPackages.ps1
 
     - name: Run tests
@@ -27,7 +27,7 @@ jobs:
         Install-Module -Name Pester -Force
         .\runTests.ps1
 
-    - name: Generate the doc HTML file
+    - name: Generate the site
       run: .\buildSite.ps1
 
     - name: Upload the site contents as an artifact
@@ -48,7 +48,7 @@ jobs:
         name: site
         path: .\webroot\
 
-    - name: Deploy the docs to Netlify
+    - name: Deploy the site to Netlify
       uses: nwtgck/actions-netlify@v1.1
       with:
         publish-dir: .\webroot\
