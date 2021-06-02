@@ -5,6 +5,5 @@ using namespace System.IO.Pipes
 using namespace System.Management.Automation
 using namespace System.Text
 
-
 Set-StrictMode -Version Latest
 $script:ErrorActionPreference = "Stop"
