@@ -32,8 +32,10 @@ function GenerateSite {
     [String] $projectRoot = "$PSScriptRoot\.."
 
     [String] $webrootPath = "$projectRoot\webroot"
-    Remove-Item $webrootPath -Recurse -Force -ErrorAction "SilentlyContinue"
-    mkdir $webrootPath > $null
+    if (-not (Test-Path $webrootPath)) {
+        mkdir $webrootPath > $null
+    }
+    Remove-Item "$webrootPath\*" -Recurse -Force -ErrorAction "SilentlyContinue"
 
     [PSCustomObject[]] $pages = Get-ChildItem "$projectRoot\example-pages\*.psm1" -Exclude "category.psm1" -Recurse |`
         ForEach-Object { NewPage $_ }
