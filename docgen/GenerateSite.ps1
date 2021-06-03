@@ -56,6 +56,11 @@ function GenerateSite {
     [String] $homePageHtml = OutputHomePage $filteredPages
     WriteHtmlFile 'index.html' $homePageHtml
 
+    # Write out the redirects.
+    [PSCustomObject[]] $redirects = GetRedirects "$projectRoot\example-pages\redirects"
+    $redirects | `
+        ForEach-Object { WriteHtmlFile $_.FromUrl $_.GetHtml() }
+
     # Copy static assets to the webroot.
     Copy-Item "$projectRoot\static\*" $webrootPath -Recurse
 }
