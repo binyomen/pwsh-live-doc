@@ -1,0 +1,6 @@
+/basics/the-null-coalescing-operator           /the-null-coalescing-operator
+/basics/pscustomobject                         /pscustomobject
+/basics/the-stderr-stream                      /the-stderr-stream
+/classes/method-stdio                          /method-stdio
+/errors/exit-status-variable-$-question-mark   /exit-status-variable-$-question-mark
+/errors/the-writeerror-function                /the-writeerror-function

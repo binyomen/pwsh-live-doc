@@ -81,9 +81,8 @@ AddScriptMethod Page GetLinkPath {
     [OutputType([String])]
     param()
 
-    [String] $categorySlug = TitleToUrlPathSegment $this.GetCategoryTitle()
     [String] $pageSlug = TitleToUrlPathSegment $this.GetTitle()
-    return "/$categorySlug/$pageSlug.html"
+    return "/$pageSlug.html"
 }
 
 AddScriptMethod Page AddToOutline {
@@ -109,6 +108,62 @@ AddScriptMethod Page GetHtml {
 
     [Byte] $script:sectionLevel = 0
     return OutputExamplePage $this $this.ModuleFileName $this.Module $AllPages
+}
+
+#endregion
+
+#region Redirect
+
+function GetRedirects {
+    [CmdletBinding()]
+    [OutputType([PSCustomObject[]])]
+    param(
+        [Parameter(Mandatory)]
+        [String] $RedirectsFilePath
+    )
+
+    return Get-Content $RedirectsFilePath | ForEach-Object {
+        [String] $line = $_
+        [String[]] $tokens = $line.Split()
+        return NewRedirect $tokens[0] $tokens[-1]
+    }
+}
+
+function NewRedirect {
+    [CmdletBinding()]
+    [OutputType([PSCustomObject])]
+    param(
+        [Parameter(Mandatory)]
+        [String] $FromUrl,
+
+        [Parameter(Mandatory)]
+        [String] $ToUrl
+    )
+
+    return [PSCustomObject]@{
+        PSTypeName = 'Redirect'
+        FromUrl = "$FromUrl.html"
+        ToUrl = "$ToUrl.html"
+    }
+}
+
+AddScriptMethod Redirect GetHtml {
+    [CmdletBinding()]
+    [OutputType([String])]
+    param()
+
+    return @"
+    <!DOCTYPE html>
+    <html lang="en-US">
+        <head>
+            <meta charset="UTF-8">
+            <meta http-equiv="refresh" content="0; url='$($this.ToUrl)'" />
+        </head>
+        <body>
+            <p>Redirecting to <a href="$($this.ToUrl)">$($this.ToUrl)</a>...</p>
+        </body>
+    </html>
+"@
 }
 
 #endregion
@@ -196,7 +251,7 @@ function BuildPageHtml {
 
     [String] $sidebarHtml = BuildSidebarHtml $ContainingPage $Pages
 
-    [String] $html= @"
+    [String] $html = @"
     <!DOCTYPE html>
     <html lang="en-US">
         <head>
