@@ -112,62 +112,6 @@ AddScriptMethod Page GetHtml {
 
 #endregion
 
-#region Redirect
-
-function GetRedirects {
-    [CmdletBinding()]
-    [OutputType([PSCustomObject[]])]
-    param(
-        [Parameter(Mandatory)]
-        [String] $RedirectsFilePath
-    )
-
-    return Get-Content $RedirectsFilePath | ForEach-Object {
-        [String] $line = $_
-        [String[]] $tokens = $line.Split()
-        return NewRedirect $tokens[0] $tokens[-1]
-    }
-}
-
-function NewRedirect {
-    [CmdletBinding()]
-    [OutputType([PSCustomObject])]
-    param(
-        [Parameter(Mandatory)]
-        [String] $FromUrl,
-
-        [Parameter(Mandatory)]
-        [String] $ToUrl
-    )
-
-    return [PSCustomObject]@{
-        PSTypeName = 'Redirect'
-        FromUrl = "$FromUrl.html"
-        ToUrl = "$ToUrl.html"
-    }
-}
-
-AddScriptMethod Redirect GetHtml {
-    [CmdletBinding()]
-    [OutputType([String])]
-    param()
-
-    return @"
-    <!DOCTYPE html>
-    <html lang="en-US">
-        <head>
-            <meta charset="UTF-8">
-            <meta http-equiv="refresh" content="0; url='$($this.ToUrl)'" />
-        </head>
-        <body>
-            <p>Redirecting to <a href="$($this.ToUrl)">$($this.ToUrl)</a>...</p>
-        </body>
-    </html>
-"@
-}
-
-#endregion
-
 function GetVersionsTestedHtml {
     [CmdletBinding()]
     [OutputType([String])]
