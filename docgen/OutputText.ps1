@@ -150,6 +150,10 @@ function OutputText {
 
     [String] $formattedText = FormatPageText $Text
     [String] $linkedText = ParseInternalLinks $formattedText
-    [String] $rawHtml = (ConvertFrom-Markdown -InputObject $linkedText).Html
-    return $rawHtml -replace "<p>", "<p class=`"content-text`">"
+    [String] $html = (ConvertFrom-Markdown -InputObject $linkedText).Html
+
+    $html = $html -replace '<p>', '<p class="content-text">'
+    $html = $html -replace '<ul>', '<ul class="content-text">'
+    $html = $html -replace '<ol>', '<ol class="content-text">'
+    return $html
 }
